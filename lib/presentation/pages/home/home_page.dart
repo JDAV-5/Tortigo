@@ -7,8 +7,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final playerName =
-        ModalRoute.of(context)?.settings.arguments as String? ??
-            'Héroe';
+        ModalRoute.of(context)?.settings.arguments as String? ?? 'Héroe';
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -18,13 +17,19 @@ class HomePage extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFF00506B),
+
+        // =====================================================
+        // BODY
+        // =====================================================
         body: Stack(
           fit: StackFit.expand,
           children: [
+            // Fondo
             const CustomPaint(
               painter: HomeBackgroundPainter(),
             ),
 
+            // Contenido
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -34,9 +39,12 @@ class HomePage extends StatelessWidget {
                   children: [
                     const SizedBox(height: 12),
 
+                    // =================================================
                     // CABECERA
+                    // =================================================
                     Row(
                       children: [
+                        // Avatar
                         Container(
                           width: 48,
                           height: 48,
@@ -51,16 +59,18 @@ class HomePage extends StatelessWidget {
                           alignment: Alignment.center,
                           child: const Text(
                             '🐢',
-                            style: TextStyle(fontSize: 27),
+                            style: TextStyle(
+                              fontSize: 27,
+                            ),
                           ),
                         ),
 
                         const SizedBox(width: 12),
 
+                        // Saludo
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 '¡Hola, $playerName!',
@@ -83,6 +93,7 @@ class HomePage extends StatelessWidget {
                           ),
                         ),
 
+                        // Estrellas
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -92,8 +103,7 @@ class HomePage extends StatelessWidget {
                             color: Colors.white.withValues(
                               alpha: 0.14,
                             ),
-                            borderRadius:
-                                BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(18),
                           ),
                           child: const Row(
                             children: [
@@ -107,8 +117,7 @@ class HomePage extends StatelessWidget {
                                 '0',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontWeight:
-                                      FontWeight.w700,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ],
@@ -119,7 +128,9 @@ class HomePage extends StatelessWidget {
 
                     const SizedBox(height: 35),
 
+                    // =================================================
                     // TÍTULO
+                    // =================================================
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -149,36 +160,38 @@ class HomePage extends StatelessWidget {
 
                     const SizedBox(height: 22),
 
-                    // TARJETAS
+                    // =================================================
+                    // FILA 1
+                    // =================================================
                     Row(
                       children: [
+                        // MISIONES
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Misiones\necológicas',
                             subtitle: 'Completa retos',
                             icon: Icons.eco_rounded,
-                            iconColor:
-                                const Color(0xFF4C82D8),
-                            backgroundColor:
-                                const Color(0xFFEAF1FF),
+                            iconColor: const Color(0xFF4C82D8),
+                            backgroundColor: const Color(0xFFEAF1FF),
                             onTap: () {
-                              debugPrint('Misiones');
+                              Navigator.pushNamed(
+                                context,
+                                '/missions',
+                              );
                             },
                           ),
                         ),
 
                         const SizedBox(width: 12),
 
+                        // JUEGOS
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Juegos\neducativos',
                             subtitle: 'Aprende jugando',
-                            icon:
-                                Icons.sports_esports_rounded,
-                            iconColor:
-                                const Color(0xFF006080),
-                            backgroundColor:
-                                const Color(0xFFE3F7FA),
+                            icon: Icons.sports_esports_rounded,
+                            iconColor: const Color(0xFF006080),
+                            backgroundColor: const Color(0xFFE3F7FA),
                             onTap: () {
                               debugPrint('Juegos');
                             },
@@ -189,18 +202,19 @@ class HomePage extends StatelessWidget {
 
                     const SizedBox(height: 12),
 
+                    // =================================================
+                    // FILA 2
+                    // =================================================
                     Row(
                       children: [
+                        // APRENDE
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Aprende',
                             subtitle: 'Explora el planeta',
-                            icon:
-                                Icons.menu_book_rounded,
-                            iconColor:
-                                const Color(0xFF7158C8),
-                            backgroundColor:
-                                const Color(0xFFF1ECFF),
+                            icon: Icons.menu_book_rounded,
+                            iconColor: const Color(0xFF7158C8),
+                            backgroundColor: const Color(0xFFF1ECFF),
                             onTap: () {
                               debugPrint('Aprende');
                             },
@@ -209,16 +223,14 @@ class HomePage extends StatelessWidget {
 
                         const SizedBox(width: 12),
 
+                        // LOGROS
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Logros',
                             subtitle: 'Tus recompensas',
-                            icon:
-                                Icons.emoji_events_rounded,
-                            iconColor:
-                                const Color(0xFFE8A700),
-                            backgroundColor:
-                                const Color(0xFFFFF5D8),
+                            icon: Icons.emoji_events_rounded,
+                            iconColor: const Color(0xFFE8A700),
+                            backgroundColor: const Color(0xFFFFF5D8),
                             onTap: () {
                               debugPrint('Logros');
                             },
@@ -229,7 +241,9 @@ class HomePage extends StatelessWidget {
 
                     const Spacer(),
 
+                    // =================================================
                     // FRASE
+                    // =================================================
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -240,8 +254,7 @@ class HomePage extends StatelessWidget {
                         color: Colors.white.withValues(
                           alpha: 0.13,
                         ),
-                        borderRadius:
-                            BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: Colors.white.withValues(
                             alpha: 0.12,
@@ -249,14 +262,15 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                       child: const Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.eco_outlined,
                             color: Color(0xFFAFCBFF),
                           ),
+
                           SizedBox(width: 10),
+
                           Flexible(
                             child: Text(
                               'Pequeñas acciones hacen grandes cambios',
@@ -264,8 +278,7 @@ class HomePage extends StatelessWidget {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,
-                                fontWeight:
-                                    FontWeight.w600,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -281,7 +294,9 @@ class HomePage extends StatelessWidget {
           ],
         ),
 
-        // BARRA INFERIOR
+        // =====================================================
+        // BARRA DE NAVEGACIÓN
+        // =====================================================
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -300,8 +315,7 @@ class HomePage extends StatelessWidget {
             child: SizedBox(
               height: 68,
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: const [
                   _BottomNavItem(
                     icon: Icons.home_rounded,
@@ -333,6 +347,10 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
+// =============================================================
+// TARJETA DEL HOME
+// =============================================================
 
 class _HomeOptionCard extends StatelessWidget {
   final String title;
@@ -382,13 +400,13 @@ class _HomeOptionCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Icono
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
                   color: backgroundColor,
-                  borderRadius:
-                      BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   icon,
@@ -399,6 +417,7 @@ class _HomeOptionCard extends StatelessWidget {
 
               const Spacer(),
 
+              // Título
               Text(
                 title,
                 style: const TextStyle(
@@ -411,6 +430,7 @@ class _HomeOptionCard extends StatelessWidget {
 
               const SizedBox(height: 5),
 
+              // Descripción
               Text(
                 subtitle,
                 style: const TextStyle(
@@ -425,6 +445,10 @@ class _HomeOptionCard extends StatelessWidget {
     );
   }
 }
+
+// =============================================================
+// ITEM BARRA INFERIOR
+// =============================================================
 
 class _BottomNavItem extends StatelessWidget {
   final IconData icon;
@@ -451,15 +475,16 @@ class _BottomNavItem extends StatelessWidget {
           color: color,
           size: 24,
         ),
+
         const SizedBox(height: 3),
+
         Text(
           label,
           style: TextStyle(
             color: color,
             fontSize: 10,
-            fontWeight: selected
-                ? FontWeight.w700
-                : FontWeight.w500,
+            fontWeight:
+                selected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
       ],
@@ -467,11 +492,16 @@ class _BottomNavItem extends StatelessWidget {
   }
 }
 
+// =============================================================
+// FONDO
+// =============================================================
+
 class HomeBackgroundPainter extends CustomPainter {
   const HomeBackgroundPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Fondo principal
     final paint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
@@ -500,6 +530,7 @@ class HomeBackgroundPainter extends CustomPainter {
       paint,
     );
 
+    // Decoración
     final decorativePaint = Paint()
       ..color = const Color(
         0xFF8FB8FF,
@@ -507,6 +538,7 @@ class HomeBackgroundPainter extends CustomPainter {
         alpha: 0.16,
       );
 
+    // Círculo derecho superior
     canvas.drawCircle(
       Offset(
         size.width * 0.90,
@@ -516,6 +548,7 @@ class HomeBackgroundPainter extends CustomPainter {
       decorativePaint,
     );
 
+    // Círculo izquierdo inferior
     canvas.drawCircle(
       Offset(
         size.width * 0.05,

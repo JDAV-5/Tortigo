@@ -56,3 +56,6 @@ flutter:
 
   assets:
     - assets/images/tortigo_logo.png
+    - assets/images/saludo.png
+    - assets/images/Misiones.png
+    - assets/images/missions/
