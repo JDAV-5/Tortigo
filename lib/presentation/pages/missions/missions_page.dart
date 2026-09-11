@@ -1,8 +1,118 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 
-class MissionsPage extends StatelessWidget {
+class MissionsPage extends StatefulWidget {
   const MissionsPage({super.key});
+
+  @override
+  State<MissionsPage> createState() => _MissionsPageState();
+}
+
+class _MissionsPageState extends State<MissionsPage> {
+  // =============================================================
+  // AUDIO
+  // =============================================================
+
+  final AudioPlayer _musicPlayer = AudioPlayer();
+
+  bool _musicEnabled = true;
+  bool _musicReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _startMusic();
+  }
+
+  Future<void> _startMusic() async {
+    try {
+      await _musicPlayer.setReleaseMode(
+        ReleaseMode.loop,
+      );
+
+      await _musicPlayer.setVolume(
+        0.25,
+      );
+
+      await _musicPlayer.play(
+        AssetSource(
+          'audio/missions/plant_seed/Camino.mp3',
+        ),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _musicReady = true;
+      });
+    } catch (e) {
+      debugPrint(
+        'Error reproduciendo Camino.mp3: $e',
+      );
+    }
+  }
+
+  Future<void> _pauseMusic() async {
+    try {
+      await _musicPlayer.pause();
+    } catch (e) {
+      debugPrint(
+        'Error pausando música: $e',
+      );
+    }
+  }
+
+  Future<void> _resumeMusic() async {
+    if (!_musicEnabled) {
+      return;
+    }
+
+    try {
+      if (_musicReady) {
+        await _musicPlayer.resume();
+      } else {
+        await _startMusic();
+      }
+    } catch (e) {
+      debugPrint(
+        'Error reanudando música: $e',
+      );
+    }
+  }
+
+  Future<void> _toggleMusic() async {
+    if (_musicEnabled) {
+      await _pauseMusic();
+
+      if (!mounted) return;
+
+      setState(() {
+        _musicEnabled = false;
+      });
+    } else {
+      if (!mounted) return;
+
+      setState(() {
+        _musicEnabled = true;
+      });
+
+      await _resumeMusic();
+    }
+  }
+
+  @override
+  void dispose() {
+    _musicPlayer.stop();
+    _musicPlayer.dispose();
+
+    super.dispose();
+  }
+
+  // =============================================================
+  // BUILD
+  // =============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -37,19 +147,33 @@ class MissionsPage extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemStatusBarContrastEnforced: false,
+        statusBarIconBrightness:
+            Brightness.light,
+        statusBarBrightness:
+            Brightness.dark,
+        systemStatusBarContrastEnforced:
+            false,
       ),
       child: Scaffold(
         extendBody: true,
-        backgroundColor: const Color(0xFF59B83A),
+        backgroundColor:
+            const Color(0xFF59B83A),
 
         body: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final height = constraints.maxHeight;
-            final topPadding = MediaQuery.paddingOf(context).top;
+          builder: (
+            context,
+            constraints,
+          ) {
+            final width =
+                constraints.maxWidth;
+
+            final height =
+                constraints.maxHeight;
+
+            final topPadding =
+                MediaQuery.paddingOf(
+              context,
+            ).top;
 
             return Stack(
               fit: StackFit.expand,
@@ -57,15 +181,18 @@ class MissionsPage extends StatelessWidget {
                 // =====================================================
                 // FONDO
                 // =====================================================
+
                 Image.asset(
                   'assets/images/missions/missions_background.png',
                   fit: BoxFit.cover,
-                  alignment: Alignment.topCenter,
+                  alignment:
+                      Alignment.topCenter,
                 ),
 
                 // =====================================================
-                // SOMBRA SUPERIOR SUAVE
+                // SOMBRA SUPERIOR
                 // =====================================================
+
                 Positioned(
                   top: 0,
                   left: 0,
@@ -73,12 +200,17 @@ class MissionsPage extends StatelessWidget {
                   height: 150,
                   child: IgnorePointer(
                     child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                      decoration:
+                          BoxDecoration(
+                        gradient:
+                            LinearGradient(
+                          begin: Alignment
+                              .topCenter,
+                          end: Alignment
+                              .bottomCenter,
                           colors: [
-                            Colors.black.withValues(
+                            Colors.black
+                                .withValues(
                               alpha: 0.08,
                             ),
                             Colors.transparent,
@@ -90,17 +222,21 @@ class MissionsPage extends StatelessWidget {
                 ),
 
                 // =====================================================
-                // LOGO / TÍTULO "MISIONES ECOLÓGICAS"
+                // LOGO MISIONES
                 // =====================================================
+
                 Positioned(
-                  top: topPadding + 40,
+                  top:
+                      topPadding + 40,
                   left: width * 0.10,
-                  right: width * 0.05,
+                  right:
+                      width * 0.05,
                   child: IgnorePointer(
                     child: Image.asset(
                       'assets/images/Misiones.png',
                       height: 110,
-                      fit: BoxFit.contain,
+                      fit:
+                          BoxFit.contain,
                     ),
                   ),
                 ),
@@ -108,42 +244,73 @@ class MissionsPage extends StatelessWidget {
                 // =====================================================
                 // BOTÓN REGRESAR
                 // =====================================================
+
                 Positioned(
-                  top: topPadding + 18,
+                  top:
+                      topPadding + 18,
                   left: 14,
                   child: _BackButton(
-                    onTap: () {
-                      Navigator.pop(context);
+                    onTap: () async {
+                      await _pauseMusic();
+
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      Navigator.pop(
+                        context,
+                      );
                     },
                   ),
                 ),
 
                 // =====================================================
-                // MASCOTA
-                //
-                // La bajamos para que no choque con el botón.
+                // BOTÓN MÚSICA
                 // =====================================================
+
                 Positioned(
-                  top: topPadding + 90,
+                  top:
+                      topPadding + 18,
+                  right: 14,
+                  child:
+                      _MusicButton(
+                    enabled:
+                        _musicEnabled,
+                    onTap:
+                        _toggleMusic,
+                  ),
+                ),
+
+                // =====================================================
+                // TORTI
+                // =====================================================
+
+                Positioned(
+                  top:
+                      topPadding + 90,
                   left: -8,
                   child: IgnorePointer(
                     child: Image.asset(
                       'assets/images/saludo.png',
                       width: 125,
-                      fit: BoxFit.contain,
+                      fit:
+                          BoxFit.contain,
                     ),
                   ),
                 ),
 
-
                 // =====================================================
                 // MISIÓN 1
                 // =====================================================
+
                 Positioned(
-                  left: width * 0.24,
-                  top: height * 0.39,
+                  left:
+                      width * 0.24,
+                  top:
+                      height * 0.39,
                   child: MissionNode(
-                    mission: missions[0],
+                    mission:
+                        missions[0],
                     onTap: () {
                       _openMission(
                         context,
@@ -156,11 +323,15 @@ class MissionsPage extends StatelessWidget {
                 // =====================================================
                 // MISIÓN 2
                 // =====================================================
+
                 Positioned(
-                  right: width * 0.07,
-                  top: height * 0.52,
+                  right:
+                      width * 0.07,
+                  top:
+                      height * 0.52,
                   child: MissionNode(
-                    mission: missions[1],
+                    mission:
+                        missions[1],
                     onTap: () {
                       _openMission(
                         context,
@@ -173,11 +344,15 @@ class MissionsPage extends StatelessWidget {
                 // =====================================================
                 // MISIÓN 3
                 // =====================================================
+
                 Positioned(
-                  left: width * 0.08,
-                  top: height * 0.65,
+                  left:
+                      width * 0.08,
+                  top:
+                      height * 0.65,
                   child: MissionNode(
-                    mission: missions[2],
+                    mission:
+                        missions[2],
                     onTap: () {
                       _openMission(
                         context,
@@ -190,11 +365,15 @@ class MissionsPage extends StatelessWidget {
                 // =====================================================
                 // MISIÓN 4
                 // =====================================================
+
                 Positioned(
-                  right: width * 0.06,
-                  top: height * 0.78,
+                  right:
+                      width * 0.06,
+                  top:
+                      height * 0.78,
                   child: MissionNode(
-                    mission: missions[3],
+                    mission:
+                        missions[3],
                     onTap: () {
                       _openMission(
                         context,
@@ -208,7 +387,8 @@ class MissionsPage extends StatelessWidget {
           },
         ),
 
-        bottomNavigationBar: const MissionsBottomNavigation(),
+        bottomNavigationBar:
+            const MissionsBottomNavigation(),
       ),
     );
   }
@@ -216,12 +396,18 @@ class MissionsPage extends StatelessWidget {
   // =============================================================
   // ABRIR MISIÓN
   // =============================================================
-  void _openMission(
+
+  Future<void> _openMission(
     BuildContext context,
     MissionData mission,
-  ) {
-    if (mission.status == MissionStatus.locked) {
-      ScaffoldMessenger.of(context)
+  ) async {
+    if (mission.status ==
+        MissionStatus.locked) {
+      HapticFeedback.lightImpact();
+
+      ScaffoldMessenger.of(
+        context,
+      )
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
@@ -238,15 +424,43 @@ class MissionsPage extends StatelessWidget {
     }
 
     if (mission.route != null) {
-      Navigator.pushNamed(
+      // ---------------------------------------------------------
+      // PAUSAMOS LA MÚSICA DEL CAMINO
+      // ---------------------------------------------------------
+
+      await _pauseMusic();
+
+      if (!context.mounted) {
+        return;
+      }
+
+      // ---------------------------------------------------------
+      // ENTRAMOS A LA MISIÓN
+      // ---------------------------------------------------------
+
+      await Navigator.pushNamed(
         context,
         mission.route!,
       );
 
+      // ---------------------------------------------------------
+      // CUANDO REGRESAMOS AL CAMINO
+      // ---------------------------------------------------------
+
+      if (!mounted) {
+        return;
+      }
+
+      if (_musicEnabled) {
+        await _resumeMusic();
+      }
+
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(
       const SnackBar(
         content: Text(
           'Esta misión estará disponible próximamente.',
@@ -290,7 +504,8 @@ class MissionData {
 // BOTÓN REGRESAR
 // =====================================================================
 
-class _BackButton extends StatelessWidget {
+class _BackButton
+    extends StatelessWidget {
   final VoidCallback onTap;
 
   const _BackButton({
@@ -298,14 +513,19 @@ class _BackButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Material(
-      color: const Color(0xFF59B83A),
-      shape: const CircleBorder(),
+      color:
+          const Color(0xFF59B83A),
+      shape:
+          const CircleBorder(),
       elevation: 4,
       child: InkWell(
         onTap: onTap,
-        customBorder: const CircleBorder(),
+        customBorder:
+            const CircleBorder(),
         child: const SizedBox(
           width: 44,
           height: 44,
@@ -321,140 +541,52 @@ class _BackButton extends StatelessWidget {
 }
 
 // =====================================================================
-// TARJETA DE NIVEL
+// BOTÓN MÚSICA
 // =====================================================================
 
-class _ProgressCard extends StatelessWidget {
-  const _ProgressCard();
+class _MusicButton
+    extends StatelessWidget {
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _MusicButton({
+    required this.enabled,
+    required this.onTap,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 8,
+  Widget build(
+    BuildContext context,
+  ) {
+    return Material(
+      color:
+          Colors.white.withValues(
+        alpha: 0.94,
       ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(
-          alpha: 0.95,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: 0.11,
+      shape:
+          const CircleBorder(),
+      elevation: 4,
+      child: InkWell(
+        onTap: onTap,
+        customBorder:
+            const CircleBorder(),
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(
+            enabled
+                ? Icons
+                    .volume_up_rounded
+                : Icons
+                    .volume_off_rounded,
+            color:
+                const Color(
+              0xFF236B3A,
             ),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // PLANETA
-          Container(
-            width: 38,
-            height: 38,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE7F4FF),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.public_rounded,
-              color: Color(0xFF2F92E3),
-              size: 23,
-            ),
-          ),
-
-          const SizedBox(width: 9),
-
-          // NIVEL
-          const Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Nivel 1',
-                  style: TextStyle(
-                    color: Color(0xFF59A83B),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                SizedBox(height: 1),
-
-                Text(
-                  'Guardián verde',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Color(0xFF003D5B),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-
-                SizedBox(height: 4),
-
-                _ProgressBar(),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 6),
-
-          // ESTRELLA
-          const Icon(
-            Icons.star_rounded,
-            color: Color(0xFFFFD23F),
             size: 25,
           ),
-        ],
+        ),
       ),
-    );
-  }
-}
-
-// =====================================================================
-// BARRA DE PROGRESO
-// =====================================================================
-
-class _ProgressBar extends StatelessWidget {
-  const _ProgressBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: const LinearProgressIndicator(
-              value: 0.05,
-              minHeight: 6,
-              backgroundColor: Color(0xFFE5EAED),
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(
-                Color(0xFF59B83A),
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(width: 5),
-
-        const Text(
-          '5%',
-          style: TextStyle(
-            color: Color(0xFF59A83B),
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -463,7 +595,8 @@ class _ProgressBar extends StatelessWidget {
 // NODO DE MISIÓN
 // =====================================================================
 
-class MissionNode extends StatelessWidget {
+class MissionNode
+    extends StatelessWidget {
   final MissionData mission;
   final VoidCallback onTap;
 
@@ -474,105 +607,157 @@ class MissionNode extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     final locked =
-        mission.status == MissionStatus.locked;
+        mission.status ==
+            MissionStatus.locked;
 
     final completed =
-        mission.status == MissionStatus.completed;
+        mission.status ==
+            MissionStatus.completed;
 
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
         width: 116,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize:
+              MainAxisSize.min,
           children: [
             // =====================================================
-            // ICONO DE MISIÓN
+            // ICONO
             // =====================================================
+
             Container(
               width: 66,
               height: 66,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(
+              decoration:
+                  BoxDecoration(
+                color: Colors.white
+                    .withValues(
                   alpha: 0.97,
                 ),
-                shape: BoxShape.circle,
-                border: Border.all(
+                shape:
+                    BoxShape.circle,
+                border:
+                    Border.all(
                   color: locked
-                      ? const Color(0xFFC6D0D5)
-                      : const Color(0xFFE8D786),
+                      ? const Color(
+                          0xFFC6D0D5,
+                        )
+                      : const Color(
+                          0xFFE8D786,
+                        ),
                   width: 3,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(
+                    color: Colors.black
+                        .withValues(
                       alpha: 0.17,
                     ),
                     blurRadius: 9,
-                    offset: const Offset(0, 4),
+                    offset:
+                        const Offset(
+                      0,
+                      4,
+                    ),
                   ),
                 ],
               ),
               child: Stack(
-                alignment: Alignment.center,
+                alignment:
+                    Alignment.center,
                 children: [
                   Container(
                     width: 52,
                     height: 52,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+                    decoration:
+                        BoxDecoration(
+                      shape:
+                          BoxShape.circle,
                       color: locked
-                          ? const Color(0xFFE8EEF1)
-                          : const Color(0xFFF4FBEF),
+                          ? const Color(
+                              0xFFE8EEF1,
+                            )
+                          : const Color(
+                              0xFFF4FBEF,
+                            ),
                     ),
                     child: Icon(
                       mission.icon,
                       size: 30,
                       color: locked
-                          ? const Color(0xFF9CAEB7)
-                          : _missionColor(mission),
+                          ? const Color(
+                              0xFF9CAEB7,
+                            )
+                          : _missionColor(
+                              mission,
+                            ),
                     ),
                   ),
 
+                  // =================================================
                   // CANDADO
+                  // =================================================
+
                   if (locked)
                     Positioned(
                       right: 0,
                       bottom: 0,
-                      child: Container(
+                      child:
+                          Container(
                         width: 22,
                         height: 22,
                         decoration:
                             const BoxDecoration(
-                          color: Color(0xFF647984),
-                          shape: BoxShape.circle,
+                          color:
+                              Color(
+                            0xFF647984,
+                          ),
+                          shape:
+                              BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.lock_rounded,
-                          color: Colors.white,
+                        child:
+                            const Icon(
+                          Icons
+                              .lock_rounded,
+                          color:
+                              Colors.white,
                           size: 13,
                         ),
                       ),
                     ),
 
+                  // =================================================
                   // COMPLETADA
+                  // =================================================
+
                   if (completed)
                     Positioned(
                       right: 0,
                       bottom: 0,
-                      child: Container(
+                      child:
+                          Container(
                         width: 22,
                         height: 22,
                         decoration:
                             const BoxDecoration(
-                          color: Color(0xFF59B83A),
-                          shape: BoxShape.circle,
+                          color:
+                              Color(
+                            0xFF59B83A,
+                          ),
+                          shape:
+                              BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.check_rounded,
-                          color: Colors.white,
+                        child:
+                            const Icon(
+                          Icons
+                              .check_rounded,
+                          color:
+                              Colors.white,
                           size: 14,
                         ),
                       ),
@@ -581,80 +766,127 @@ class MissionNode extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 5),
+            const SizedBox(
+              height: 5,
+            ),
 
             // =====================================================
-            // TARJETA CON INFORMACIÓN
+            // INFORMACIÓN
             // =====================================================
+
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
+              width:
+                  double.infinity,
+              padding:
+                  const EdgeInsets.symmetric(
                 horizontal: 7,
                 vertical: 6,
               ),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(
+              decoration:
+                  BoxDecoration(
+                color: Colors.white
+                    .withValues(
                   alpha: 0.93,
                 ),
                 borderRadius:
-                    BorderRadius.circular(14),
-                border: Border.all(
+                    BorderRadius.circular(
+                  14,
+                ),
+                border:
+                    Border.all(
                   color: locked
-                      ? const Color(0xFFD6DEE2)
-                      : const Color(0xFFDDE9D3),
+                      ? const Color(
+                          0xFFD6DEE2,
+                        )
+                      : const Color(
+                          0xFFDDE9D3,
+                        ),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(
+                    color: Colors.black
+                        .withValues(
                       alpha: 0.08,
                     ),
                     blurRadius: 6,
-                    offset: const Offset(0, 3),
+                    offset:
+                        const Offset(
+                      0,
+                      3,
+                    ),
                   ),
                 ],
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize:
+                    MainAxisSize.min,
                 children: [
                   Text(
                     mission.title,
-                    textAlign: TextAlign.center,
+                    textAlign:
+                        TextAlign.center,
                     maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    overflow:
+                        TextOverflow
+                            .ellipsis,
+                    style:
+                        TextStyle(
                       color: locked
-                          ? const Color(0xFF7F8D93)
-                          : const Color(0xFF2D7A3F),
+                          ? const Color(
+                              0xFF7F8D93,
+                            )
+                          : const Color(
+                              0xFF2D7A3F,
+                            ),
                       fontSize: 10,
                       height: 1.1,
-                      fontWeight: FontWeight.w800,
+                      fontWeight:
+                          FontWeight
+                              .w800,
                     ),
                   ),
 
-                  const SizedBox(height: 3),
+                  const SizedBox(
+                    height: 3,
+                  ),
 
                   Row(
                     mainAxisAlignment:
-                        MainAxisAlignment.center,
+                        MainAxisAlignment
+                            .center,
                     children: [
                       Icon(
-                        Icons.star_rounded,
+                        Icons
+                            .star_rounded,
                         color: locked
-                            ? const Color(0xFFC7CED2)
-                            : const Color(0xFFFFD23F),
+                            ? const Color(
+                                0xFFC7CED2,
+                              )
+                            : const Color(
+                                0xFFFFD23F,
+                              ),
                         size: 18,
                       ),
 
-                      const SizedBox(width: 2),
+                      const SizedBox(
+                        width: 2,
+                      ),
 
                       Text(
                         '+${mission.reward}',
-                        style: TextStyle(
+                        style:
+                            TextStyle(
                           color: locked
-                              ? const Color(0xFF9AA6AC)
-                              : const Color(0xFF6B5200),
+                              ? const Color(
+                                  0xFF9AA6AC,
+                                )
+                              : const Color(
+                                  0xFF6B5200,
+                                ),
                           fontSize: 10,
-                          fontWeight: FontWeight.w800,
+                          fontWeight:
+                              FontWeight
+                                  .w800,
                         ),
                       ),
                     ],
@@ -672,26 +904,39 @@ class MissionNode extends StatelessWidget {
     MissionData mission,
   ) {
     if (mission.icon ==
-        Icons.local_florist_rounded) {
-      return const Color(0xFF59B83A);
+        Icons
+            .local_florist_rounded) {
+      return const Color(
+        0xFF59B83A,
+      );
     }
 
     if (mission.icon ==
-        Icons.water_drop_rounded) {
-      return const Color(0xFF3BAEEB);
+        Icons
+            .water_drop_rounded) {
+      return const Color(
+        0xFF3BAEEB,
+      );
     }
 
     if (mission.icon ==
         Icons.recycling_rounded) {
-      return const Color(0xFF45A049);
+      return const Color(
+        0xFF45A049,
+      );
     }
 
     if (mission.icon ==
-        Icons.directions_bike_rounded) {
-      return const Color(0xFF006080);
+        Icons
+            .directions_bike_rounded) {
+      return const Color(
+        0xFF006080,
+      );
     }
 
-    return const Color(0xFF4C82D8);
+    return const Color(
+      0xFF4C82D8,
+    );
   }
 }
 
@@ -706,30 +951,42 @@ class MissionsBottomNavigation
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(
+      margin:
+          const EdgeInsets.fromLTRB(
         14,
         0,
         14,
         10,
       ),
-      padding: const EdgeInsets.symmetric(
+      padding:
+          const EdgeInsets.symmetric(
         vertical: 5,
       ),
-      decoration: BoxDecoration(
+      decoration:
+          BoxDecoration(
         color: Colors.white.withValues(
           alpha: 0.96,
         ),
         borderRadius:
-            BorderRadius.circular(22),
+            BorderRadius.circular(
+          22,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
+            color:
+                Colors.black.withValues(
               alpha: 0.15,
             ),
             blurRadius: 15,
-            offset: const Offset(0, 4),
+            offset:
+                const Offset(
+              0,
+              4,
+            ),
           ),
         ],
       ),
@@ -737,13 +994,16 @@ class MissionsBottomNavigation
         top: false,
         child: Row(
           mainAxisAlignment:
-              MainAxisAlignment.spaceAround,
+              MainAxisAlignment
+                  .spaceAround,
           children: [
             _NavItem(
-              icon: Icons.home_rounded,
+              icon:
+                  Icons.home_rounded,
               label: 'Inicio',
               onTap: () {
-                Navigator.pushReplacementNamed(
+                Navigator
+                    .pushReplacementNamed(
                   context,
                   '/home',
                 );
@@ -752,24 +1012,29 @@ class MissionsBottomNavigation
 
             const _NavItem(
               icon:
-                  Icons.sports_esports_rounded,
+                  Icons
+                      .sports_esports_rounded,
               label: 'Juegos',
             ),
 
             const _NavItem(
-              icon: Icons.menu_book_rounded,
+              icon:
+                  Icons
+                      .menu_book_rounded,
               label: 'Aprender',
             ),
 
             const _NavItem(
               icon:
-                  Icons.emoji_events_rounded,
+                  Icons
+                      .emoji_events_rounded,
               label: 'Logros',
             ),
 
             const _NavItem(
               icon:
-                  Icons.chat_bubble_rounded,
+                  Icons
+                      .chat_bubble_rounded,
               label: 'Torti',
             ),
           ],
@@ -780,10 +1045,11 @@ class MissionsBottomNavigation
 }
 
 // =====================================================================
-// ITEM DE NAVEGACIÓN
+// ITEM NAVEGACIÓN
 // =====================================================================
 
-class _NavItem extends StatelessWidget {
+class _NavItem
+    extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
@@ -795,32 +1061,50 @@ class _NavItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius:
+          BorderRadius.circular(
+        14,
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
+        padding:
+            const EdgeInsets.symmetric(
           horizontal: 8,
           vertical: 4,
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize:
+              MainAxisSize.min,
           children: [
             Icon(
               icon,
-              color: const Color(0xFF718089),
+              color:
+                  const Color(
+                0xFF718089,
+              ),
               size: 22,
             ),
 
-            const SizedBox(height: 2),
+            const SizedBox(
+              height: 2,
+            ),
 
             Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF718089),
+              style:
+                  const TextStyle(
+                color:
+                    Color(
+                  0xFF718089,
+                ),
                 fontSize: 9,
-                fontWeight: FontWeight.w600,
+                fontWeight:
+                    FontWeight
+                        .w600,
               ),
             ),
           ],
