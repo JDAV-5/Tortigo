@@ -56,8 +56,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/tortigo_logo.png
+    - assets/images/tortigo_logo1.png
     - assets/images/saludo.png
     - assets/images/Misiones.png
     - assets/images/missions/
+    - assets/images/tortigo_splash.png
+    - assets/images/fondo1.png
     - assets/audio/missions/plant_seed/Camino.mp3

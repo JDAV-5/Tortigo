@@ -19,12 +19,34 @@ class _MissionsPageState extends State<MissionsPage> {
   bool _musicEnabled = true;
   bool _musicReady = false;
 
+  // =============================================================
+  // PROGRESO DE MISIONES
+  // =============================================================
+
+  bool _plantSeedCompleted = false;
+
+  bool _waterMissionUnlocked = false;
+
+  // Controla la animación especial del nodo 2.
+  bool _unlockingMission2 = false;
+
+  // Controla el aviso superior.
+  bool _showUnlockBanner = false;
+
+  // =============================================================
+  // INIT
+  // =============================================================
+
   @override
   void initState() {
     super.initState();
 
     _startMusic();
   }
+
+  // =============================================================
+  // MÚSICA
+  // =============================================================
 
   Future<void> _startMusic() async {
     try {
@@ -42,7 +64,9 @@ class _MissionsPageState extends State<MissionsPage> {
         ),
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _musicReady = true;
@@ -86,13 +110,17 @@ class _MissionsPageState extends State<MissionsPage> {
     if (_musicEnabled) {
       await _pauseMusic();
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _musicEnabled = false;
       });
     } else {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _musicEnabled = true;
@@ -101,6 +129,10 @@ class _MissionsPageState extends State<MissionsPage> {
       await _resumeMusic();
     }
   }
+
+  // =============================================================
+  // DISPOSE
+  // =============================================================
 
   @override
   void dispose() {
@@ -117,25 +149,48 @@ class _MissionsPageState extends State<MissionsPage> {
   @override
   Widget build(BuildContext context) {
     final missions = [
-      const MissionData(
+      // =========================================================
+      // MISIÓN 1
+      // =========================================================
+
+      MissionData(
         title: 'Planta una semilla',
         reward: 20,
         icon: Icons.local_florist_rounded,
-        status: MissionStatus.available,
+        status: _plantSeedCompleted
+            ? MissionStatus.completed
+            : MissionStatus.available,
         route: '/missions/plant-seed',
       ),
-      const MissionData(
+
+      // =========================================================
+      // MISIÓN 2
+      // =========================================================
+
+      MissionData(
         title: 'Ahorra agua',
         reward: 15,
         icon: Icons.water_drop_rounded,
-        status: MissionStatus.locked,
+        status: _waterMissionUnlocked
+            ? MissionStatus.available
+            : MissionStatus.locked,
       ),
+
+      // =========================================================
+      // MISIÓN 3
+      // =========================================================
+
       const MissionData(
         title: 'Recicla residuos',
         reward: 25,
         icon: Icons.recycling_rounded,
         status: MissionStatus.locked,
       ),
+
+      // =========================================================
+      // MISIÓN 4
+      // =========================================================
+
       const MissionData(
         title: 'Transporte sostenible',
         reward: 30,
@@ -147,28 +202,22 @@ class _MissionsPageState extends State<MissionsPage> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness:
-            Brightness.light,
-        statusBarBrightness:
-            Brightness.dark,
-        systemStatusBarContrastEnforced:
-            false,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemStatusBarContrastEnforced: false,
       ),
       child: Scaffold(
         extendBody: true,
-        backgroundColor:
-            const Color(0xFF59B83A),
+        backgroundColor: const Color(0xFF59B83A),
 
         body: LayoutBuilder(
           builder: (
             context,
             constraints,
           ) {
-            final width =
-                constraints.maxWidth;
+            final width = constraints.maxWidth;
 
-            final height =
-                constraints.maxHeight;
+            final height = constraints.maxHeight;
 
             final topPadding =
                 MediaQuery.paddingOf(
@@ -204,10 +253,10 @@ class _MissionsPageState extends State<MissionsPage> {
                           BoxDecoration(
                         gradient:
                             LinearGradient(
-                          begin: Alignment
-                              .topCenter,
-                          end: Alignment
-                              .bottomCenter,
+                          begin:
+                              Alignment.topCenter,
+                          end:
+                              Alignment.bottomCenter,
                           colors: [
                             Colors.black
                                 .withValues(
@@ -222,21 +271,18 @@ class _MissionsPageState extends State<MissionsPage> {
                 ),
 
                 // =====================================================
-                // LOGO MISIONES
+                // LOGO
                 // =====================================================
 
                 Positioned(
-                  top:
-                      topPadding + 40,
+                  top: topPadding + 40,
                   left: width * 0.10,
-                  right:
-                      width * 0.05,
+                  right: width * 0.05,
                   child: IgnorePointer(
                     child: Image.asset(
                       'assets/images/Misiones.png',
                       height: 110,
-                      fit:
-                          BoxFit.contain,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -246,8 +292,7 @@ class _MissionsPageState extends State<MissionsPage> {
                 // =====================================================
 
                 Positioned(
-                  top:
-                      topPadding + 18,
+                  top: topPadding + 18,
                   left: 14,
                   child: _BackButton(
                     onTap: () async {
@@ -269,15 +314,13 @@ class _MissionsPageState extends State<MissionsPage> {
                 // =====================================================
 
                 Positioned(
-                  top:
-                      topPadding + 18,
+                  top: topPadding + 18,
                   right: 14,
-                  child:
-                      _MusicButton(
-                    enabled:
-                        _musicEnabled,
-                    onTap:
-                        _toggleMusic,
+                  child: _MusicButton(
+                    enabled: _musicEnabled,
+                    onTap: () {
+                      _toggleMusic();
+                    },
                   ),
                 ),
 
@@ -286,15 +329,53 @@ class _MissionsPageState extends State<MissionsPage> {
                 // =====================================================
 
                 Positioned(
-                  top:
-                      topPadding + 90,
+                  top: topPadding + 90,
                   left: -8,
                   child: IgnorePointer(
                     child: Image.asset(
                       'assets/images/saludo.png',
                       width: 125,
-                      fit:
-                          BoxFit.contain,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+
+                // =====================================================
+                // AVISO DE NUEVA MISIÓN DESBLOQUEADA
+                // =====================================================
+
+                Positioned(
+                  top: topPadding + 165,
+                  left: 25,
+                  right: 25,
+                  child: IgnorePointer(
+                    child: AnimatedSlide(
+                      duration:
+                          const Duration(
+                        milliseconds: 500,
+                      ),
+                      curve:
+                          Curves.easeOutBack,
+                      offset:
+                          _showUnlockBanner
+                              ? Offset.zero
+                              : const Offset(
+                                  0,
+                                  -0.45,
+                                ),
+                      child:
+                          AnimatedOpacity(
+                        duration:
+                            const Duration(
+                          milliseconds: 350,
+                        ),
+                        opacity:
+                            _showUnlockBanner
+                                ? 1
+                                : 0,
+                        child:
+                            const _UnlockBanner(),
+                      ),
                     ),
                   ),
                 ),
@@ -304,13 +385,10 @@ class _MissionsPageState extends State<MissionsPage> {
                 // =====================================================
 
                 Positioned(
-                  left:
-                      width * 0.24,
-                  top:
-                      height * 0.39,
+                  left: width * 0.24,
+                  top: height * 0.39,
                   child: MissionNode(
-                    mission:
-                        missions[0],
+                    mission: missions[0],
                     onTap: () {
                       _openMission(
                         context,
@@ -325,13 +403,15 @@ class _MissionsPageState extends State<MissionsPage> {
                 // =====================================================
 
                 Positioned(
-                  right:
-                      width * 0.07,
-                  top:
-                      height * 0.52,
+                  right: width * 0.07,
+                  top: height * 0.52,
                   child: MissionNode(
-                    mission:
-                        missions[1],
+                    mission: missions[1],
+
+                    // Activa el efecto de desbloqueo.
+                    animateUnlock:
+                        _unlockingMission2,
+
                     onTap: () {
                       _openMission(
                         context,
@@ -346,13 +426,10 @@ class _MissionsPageState extends State<MissionsPage> {
                 // =====================================================
 
                 Positioned(
-                  left:
-                      width * 0.08,
-                  top:
-                      height * 0.65,
+                  left: width * 0.08,
+                  top: height * 0.65,
                   child: MissionNode(
-                    mission:
-                        missions[2],
+                    mission: missions[2],
                     onTap: () {
                       _openMission(
                         context,
@@ -367,13 +444,10 @@ class _MissionsPageState extends State<MissionsPage> {
                 // =====================================================
 
                 Positioned(
-                  right:
-                      width * 0.06,
-                  top:
-                      height * 0.78,
+                  right: width * 0.06,
+                  top: height * 0.78,
                   child: MissionNode(
-                    mission:
-                        missions[3],
+                    mission: missions[3],
                     onTap: () {
                       _openMission(
                         context,
@@ -401,13 +475,15 @@ class _MissionsPageState extends State<MissionsPage> {
     BuildContext context,
     MissionData mission,
   ) async {
+    // ===========================================================
+    // MISIÓN BLOQUEADA
+    // ===========================================================
+
     if (mission.status ==
         MissionStatus.locked) {
       HapticFeedback.lightImpact();
 
-      ScaffoldMessenger.of(
-        context,
-      )
+      ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           const SnackBar(
@@ -423,6 +499,10 @@ class _MissionsPageState extends State<MissionsPage> {
       return;
     }
 
+    // ===========================================================
+    // MISIÓN CON RUTA
+    // ===========================================================
+
     if (mission.route != null) {
       // ---------------------------------------------------------
       // PAUSAMOS LA MÚSICA DEL CAMINO
@@ -435,32 +515,52 @@ class _MissionsPageState extends State<MissionsPage> {
       }
 
       // ---------------------------------------------------------
-      // ENTRAMOS A LA MISIÓN
+      // ABRIMOS LA MISIÓN
+      //
+      // El resultado será true cuando la misión termine.
       // ---------------------------------------------------------
 
-      await Navigator.pushNamed(
+      final result =
+          await Navigator.pushNamed(
         context,
         mission.route!,
       );
-
-      // ---------------------------------------------------------
-      // CUANDO REGRESAMOS AL CAMINO
-      // ---------------------------------------------------------
 
       if (!mounted) {
         return;
       }
 
+      // ---------------------------------------------------------
+      // VOLVEMOS A REPRODUCIR CAMINO.MP3
+      // ---------------------------------------------------------
+
       if (_musicEnabled) {
         await _resumeMusic();
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      // ---------------------------------------------------------
+      // MISIÓN 1 COMPLETADA
+      // ---------------------------------------------------------
+
+      if (result == true &&
+          mission.route ==
+              '/missions/plant-seed') {
+        await _completePlantSeedMission();
       }
 
       return;
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(
+    // ===========================================================
+    // MISIÓN DESBLOQUEADA PERO AÚN SIN PANTALLA
+    // ===========================================================
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
       const SnackBar(
         content: Text(
           'Esta misión estará disponible próximamente.',
@@ -468,10 +568,98 @@ class _MissionsPageState extends State<MissionsPage> {
       ),
     );
   }
+
+  // =============================================================
+  // COMPLETAR MISIÓN 1 Y DESBLOQUEAR MISIÓN 2
+  // =============================================================
+
+  Future<void>
+      _completePlantSeedMission() async {
+    // Si ya fue completada anteriormente,
+    // no repetimos la secuencia.
+    if (_plantSeedCompleted) {
+      return;
+    }
+
+    // ===========================================================
+    // PASO 1
+    // MARCAR MISIÓN 1 COMO COMPLETADA
+    // ===========================================================
+
+    setState(() {
+      _plantSeedCompleted = true;
+    });
+
+    HapticFeedback.mediumImpact();
+
+    // Dejamos visible el check verde.
+    await Future.delayed(
+      const Duration(
+        milliseconds: 650,
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    // ===========================================================
+    // PASO 2
+    // DESBLOQUEAMOS AHORRA AGUA
+    // ===========================================================
+
+    setState(() {
+      _waterMissionUnlocked = true;
+
+      _unlockingMission2 = true;
+
+      _showUnlockBanner = true;
+    });
+
+    HapticFeedback.heavyImpact();
+
+    // ===========================================================
+    // PASO 3
+    // DEJAMOS CORRER LA ANIMACIÓN
+    // ===========================================================
+
+    await Future.delayed(
+      const Duration(
+        milliseconds: 1900,
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _unlockingMission2 = false;
+    });
+
+    // ===========================================================
+    // PASO 4
+    // EL MENSAJE QUEDA UN POCO MÁS
+    // ===========================================================
+
+    await Future.delayed(
+      const Duration(
+        milliseconds: 1000,
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _showUnlockBanner = false;
+    });
+  }
 }
 
 // =====================================================================
-// ESTADO DE MISIÓN
+// ESTADOS
 // =====================================================================
 
 enum MissionStatus {
@@ -481,7 +669,7 @@ enum MissionStatus {
 }
 
 // =====================================================================
-// MODELO DE MISIÓN
+// MODELO
 // =====================================================================
 
 class MissionData {
@@ -519,8 +707,7 @@ class _BackButton
     return Material(
       color:
           const Color(0xFF59B83A),
-      shape:
-          const CircleBorder(),
+      shape: const CircleBorder(),
       elevation: 4,
       child: InkWell(
         onTap: onTap,
@@ -563,8 +750,7 @@ class _MusicButton
           Colors.white.withValues(
         alpha: 0.94,
       ),
-      shape:
-          const CircleBorder(),
+      shape: const CircleBorder(),
       elevation: 4,
       child: InkWell(
         onTap: onTap,
@@ -592,328 +778,776 @@ class _MusicButton
 }
 
 // =====================================================================
+// AVISO NUEVA MISIÓN
+// =====================================================================
+
+class _UnlockBanner
+    extends StatelessWidget {
+  const _UnlockBanner();
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color:
+            Colors.white.withValues(
+          alpha: 0.97,
+        ),
+        borderRadius:
+            BorderRadius.circular(20),
+        border: Border.all(
+          color:
+              const Color(0xFFFFD23F),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color:
+                Colors.black.withValues(
+              alpha: 0.16,
+            ),
+            blurRadius: 15,
+            offset:
+                const Offset(
+              0,
+              5,
+            ),
+          ),
+        ],
+      ),
+      child: const Row(
+        mainAxisAlignment:
+            MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.lock_open_rounded,
+            color:
+                Color(0xFF59B83A),
+            size: 26,
+          ),
+
+          SizedBox(width: 8),
+
+          Flexible(
+            child: Column(
+              mainAxisSize:
+                  MainAxisSize.min,
+              children: [
+                Text(
+                  '¡Nueva misión desbloqueada!',
+                  textAlign:
+                      TextAlign.center,
+                  style: TextStyle(
+                    color:
+                        Color(
+                      0xFF236B3A,
+                    ),
+                    fontSize: 13,
+                    fontWeight:
+                        FontWeight.w900,
+                  ),
+                ),
+
+                SizedBox(height: 2),
+
+                Text(
+                  'Ahorra agua',
+                  textAlign:
+                      TextAlign.center,
+                  style: TextStyle(
+                    color:
+                        Color(
+                      0xFF3BAEEB,
+                    ),
+                    fontSize: 12,
+                    fontWeight:
+                        FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(width: 7),
+
+          Icon(
+            Icons.auto_awesome_rounded,
+            color:
+                Color(0xFFFFD23F),
+            size: 23,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =====================================================================
 // NODO DE MISIÓN
 // =====================================================================
 
 class MissionNode
-    extends StatelessWidget {
+    extends StatefulWidget {
   final MissionData mission;
+
   final VoidCallback onTap;
+
+  final bool animateUnlock;
 
   const MissionNode({
     super.key,
     required this.mission,
     required this.onTap,
+    this.animateUnlock = false,
   });
+
+  @override
+  State<MissionNode> createState() =>
+      _MissionNodeState();
+}
+
+class _MissionNodeState
+    extends State<MissionNode>
+    with
+        SingleTickerProviderStateMixin {
+  late final AnimationController
+      _unlockController;
+
+  late final Animation<double>
+      _scaleAnimation;
+
+  late final Animation<double>
+      _glowAnimation;
+
+  // =============================================================
+  // INIT
+  // =============================================================
+
+  @override
+  void initState() {
+    super.initState();
+
+    _unlockController =
+        AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 1100,
+      ),
+      value: 1,
+    );
+
+    _scaleAnimation =
+        Tween<double>(
+      begin: 0.70,
+      end: 1,
+    ).animate(
+      CurvedAnimation(
+        parent:
+            _unlockController,
+        curve:
+            Curves.elasticOut,
+      ),
+    );
+
+    _glowAnimation =
+        TweenSequence<double>(
+      [
+        TweenSequenceItem(
+          tween: Tween<double>(
+            begin: 0,
+            end: 1,
+          ).chain(
+            CurveTween(
+              curve:
+                  Curves.easeOut,
+            ),
+          ),
+          weight: 40,
+        ),
+        TweenSequenceItem(
+          tween: Tween<double>(
+            begin: 1,
+            end: 0,
+          ).chain(
+            CurveTween(
+              curve:
+                  Curves.easeIn,
+            ),
+          ),
+          weight: 60,
+        ),
+      ],
+    ).animate(
+      _unlockController,
+    );
+  }
+
+  // =============================================================
+  // DETECTAR DESBLOQUEO
+  // =============================================================
+
+  @override
+  void didUpdateWidget(
+    covariant MissionNode oldWidget,
+  ) {
+    super.didUpdateWidget(
+      oldWidget,
+    );
+
+    if (widget.animateUnlock &&
+        !oldWidget.animateUnlock) {
+      _unlockController.forward(
+        from: 0,
+      );
+    }
+  }
+
+  // =============================================================
+  // DISPOSE
+  // =============================================================
+
+  @override
+  void dispose() {
+    _unlockController.dispose();
+
+    super.dispose();
+  }
+
+  // =============================================================
+  // BUILD
+  // =============================================================
 
   @override
   Widget build(
     BuildContext context,
   ) {
     final locked =
-        mission.status ==
+        widget.mission.status ==
             MissionStatus.locked;
 
     final completed =
-        mission.status ==
+        widget.mission.status ==
             MissionStatus.completed;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 116,
-        child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
-          children: [
-            // =====================================================
-            // ICONO
-            // =====================================================
+    return AnimatedBuilder(
+      animation:
+          _unlockController,
+      builder: (
+        context,
+        child,
+      ) {
+        final scale =
+            _scaleAnimation.value;
 
-            Container(
-              width: 66,
-              height: 66,
-              decoration:
-                  BoxDecoration(
-                color: Colors.white
-                    .withValues(
-                  alpha: 0.97,
-                ),
-                shape:
-                    BoxShape.circle,
-                border:
-                    Border.all(
-                  color: locked
-                      ? const Color(
-                          0xFFC6D0D5,
-                        )
-                      : const Color(
-                          0xFFE8D786,
-                        ),
-                  width: 3,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black
-                        .withValues(
-                      alpha: 0.17,
-                    ),
-                    blurRadius: 9,
-                    offset:
-                        const Offset(
-                      0,
-                      4,
-                    ),
-                  ),
-                ],
-              ),
-              child: Stack(
-                alignment:
-                    Alignment.center,
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration:
-                        BoxDecoration(
-                      shape:
-                          BoxShape.circle,
-                      color: locked
-                          ? const Color(
-                              0xFFE8EEF1,
-                            )
-                          : const Color(
-                              0xFFF4FBEF,
-                            ),
-                    ),
-                    child: Icon(
-                      mission.icon,
-                      size: 30,
-                      color: locked
-                          ? const Color(
-                              0xFF9CAEB7,
-                            )
-                          : _missionColor(
-                              mission,
-                            ),
-                    ),
-                  ),
+        final glow =
+            _glowAnimation.value;
 
-                  // =================================================
-                  // CANDADO
-                  // =================================================
-
-                  if (locked)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child:
-                          Container(
-                        width: 22,
-                        height: 22,
-                        decoration:
-                            const BoxDecoration(
-                          color:
-                              Color(
-                            0xFF647984,
-                          ),
-                          shape:
-                              BoxShape.circle,
-                        ),
-                        child:
-                            const Icon(
-                          Icons
-                              .lock_rounded,
-                          color:
-                              Colors.white,
-                          size: 13,
-                        ),
-                      ),
-                    ),
-
-                  // =================================================
-                  // COMPLETADA
-                  // =================================================
-
-                  if (completed)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child:
-                          Container(
-                        width: 22,
-                        height: 22,
-                        decoration:
-                            const BoxDecoration(
-                          color:
-                              Color(
-                            0xFF59B83A,
-                          ),
-                          shape:
-                              BoxShape.circle,
-                        ),
-                        child:
-                            const Icon(
-                          Icons
-                              .check_rounded,
-                          color:
-                              Colors.white,
-                          size: 14,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            const SizedBox(
-              height: 5,
-            ),
-
-            // =====================================================
-            // INFORMACIÓN
-            // =====================================================
-
-            Container(
-              width:
-                  double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 7,
-                vertical: 6,
-              ),
-              decoration:
-                  BoxDecoration(
-                color: Colors.white
-                    .withValues(
-                  alpha: 0.93,
-                ),
-                borderRadius:
-                    BorderRadius.circular(
-                  14,
-                ),
-                border:
-                    Border.all(
-                  color: locked
-                      ? const Color(
-                          0xFFD6DEE2,
-                        )
-                      : const Color(
-                          0xFFDDE9D3,
-                        ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black
-                        .withValues(
-                      alpha: 0.08,
-                    ),
-                    blurRadius: 6,
-                    offset:
-                        const Offset(
-                      0,
-                      3,
-                    ),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize:
-                    MainAxisSize.min,
-                children: [
-                  Text(
-                    mission.title,
-                    textAlign:
-                        TextAlign.center,
-                    maxLines: 2,
-                    overflow:
-                        TextOverflow
-                            .ellipsis,
-                    style:
-                        TextStyle(
-                      color: locked
-                          ? const Color(
-                              0xFF7F8D93,
-                            )
-                          : const Color(
-                              0xFF2D7A3F,
-                            ),
-                      fontSize: 10,
-                      height: 1.1,
-                      fontWeight:
-                          FontWeight
-                              .w800,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 3,
-                  ),
-
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment
-                            .center,
+        return Transform.scale(
+          scale: scale,
+          child: Stack(
+            clipBehavior:
+                Clip.none,
+            alignment:
+                Alignment.center,
+            children: [
+              GestureDetector(
+                onTap:
+                    widget.onTap,
+                child: SizedBox(
+                  width: 116,
+                  child: Column(
+                    mainAxisSize:
+                        MainAxisSize
+                            .min,
                     children: [
-                      Icon(
-                        Icons
-                            .star_rounded,
-                        color: locked
-                            ? const Color(
-                                0xFFC7CED2,
-                              )
-                            : const Color(
-                                0xFFFFD23F,
+                      // =========================================
+                      // ICONO
+                      // =========================================
+
+                      AnimatedContainer(
+                        duration:
+                            const Duration(
+                          milliseconds:
+                              450,
+                        ),
+                        width: 66,
+                        height: 66,
+                        decoration:
+                            BoxDecoration(
+                          color:
+                              Colors.white
+                                  .withValues(
+                            alpha: 0.97,
+                          ),
+                          shape:
+                              BoxShape
+                                  .circle,
+
+                          border:
+                              Border.all(
+                            color: widget
+                                    .animateUnlock
+                                ? const Color(
+                                    0xFFFFD23F,
+                                  )
+                                : locked
+                                    ? const Color(
+                                        0xFFC6D0D5,
+                                      )
+                                    : const Color(
+                                        0xFFE8D786,
+                                      ),
+                            width: widget
+                                    .animateUnlock
+                                ? 4
+                                : 3,
+                          ),
+
+                          boxShadow: [
+                            BoxShadow(
+                              color: widget
+                                      .animateUnlock
+                                  ? const Color(
+                                      0xFFFFD23F,
+                                    ).withValues(
+                                      alpha:
+                                          0.15 +
+                                              (glow *
+                                                  0.55),
+                                    )
+                                  : Colors
+                                      .black
+                                      .withValues(
+                                      alpha:
+                                          0.17,
+                                    ),
+                              blurRadius: widget
+                                      .animateUnlock
+                                  ? 10 +
+                                      (glow *
+                                          18)
+                                  : 9,
+                              spreadRadius:
+                                  widget
+                                          .animateUnlock
+                                      ? glow *
+                                          5
+                                      : 0,
+                              offset:
+                                  const Offset(
+                                0,
+                                4,
                               ),
-                        size: 18,
+                            ),
+                          ],
+                        ),
+
+                        child: Stack(
+                          alignment:
+                              Alignment
+                                  .center,
+                          children: [
+                            // =====================================
+                            // CÍRCULO INTERIOR
+                            // =====================================
+
+                            AnimatedContainer(
+                              duration:
+                                  const Duration(
+                                milliseconds:
+                                    450,
+                              ),
+                              width: 52,
+                              height: 52,
+                              decoration:
+                                  BoxDecoration(
+                                shape:
+                                    BoxShape
+                                        .circle,
+                                color: locked
+                                    ? const Color(
+                                        0xFFE8EEF1,
+                                      )
+                                    : const Color(
+                                        0xFFF4FBEF,
+                                      ),
+                              ),
+                              child: Icon(
+                                widget
+                                    .mission
+                                    .icon,
+                                size: 30,
+                                color: locked
+                                    ? const Color(
+                                        0xFF9CAEB7,
+                                      )
+                                    : _missionColor(
+                                        widget
+                                            .mission,
+                                      ),
+                              ),
+                            ),
+
+                            // =====================================
+                            // CANDADO / CHECK
+                            // =====================================
+
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child:
+                                  AnimatedSwitcher(
+                                duration:
+                                    const Duration(
+                                  milliseconds:
+                                      450,
+                                ),
+                                transitionBuilder:
+                                    (
+                                  child,
+                                  animation,
+                                ) {
+                                  return ScaleTransition(
+                                    scale:
+                                        animation,
+                                    child:
+                                        FadeTransition(
+                                      opacity:
+                                          animation,
+                                      child:
+                                          child,
+                                    ),
+                                  );
+                                },
+                                child: locked
+                                    ? Container(
+                                        key:
+                                            const ValueKey(
+                                          'locked',
+                                        ),
+                                        width:
+                                            22,
+                                        height:
+                                            22,
+                                        decoration:
+                                            const BoxDecoration(
+                                          color:
+                                              Color(
+                                            0xFF647984,
+                                          ),
+                                          shape:
+                                              BoxShape.circle,
+                                        ),
+                                        child:
+                                            const Icon(
+                                          Icons
+                                              .lock_rounded,
+                                          color:
+                                              Colors.white,
+                                          size:
+                                              13,
+                                        ),
+                                      )
+                                    : completed
+                                        ? Container(
+                                            key:
+                                                const ValueKey(
+                                              'completed',
+                                            ),
+                                            width:
+                                                22,
+                                            height:
+                                                22,
+                                            decoration:
+                                                const BoxDecoration(
+                                              color:
+                                                  Color(
+                                                0xFF59B83A,
+                                              ),
+                                              shape:
+                                                  BoxShape.circle,
+                                            ),
+                                            child:
+                                                const Icon(
+                                              Icons
+                                                  .check_rounded,
+                                              color:
+                                                  Colors.white,
+                                              size:
+                                                  14,
+                                            ),
+                                          )
+                                        : const SizedBox(
+                                            key:
+                                                ValueKey(
+                                              'unlocked',
+                                            ),
+                                            width:
+                                                22,
+                                            height:
+                                                22,
+                                          ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
 
                       const SizedBox(
-                        width: 2,
+                        height: 5,
                       ),
 
-                      Text(
-                        '+${mission.reward}',
-                        style:
-                            TextStyle(
-                          color: locked
-                              ? const Color(
-                                  0xFF9AA6AC,
-                                )
-                              : const Color(
-                                  0xFF6B5200,
+                      // =========================================
+                      // TARJETA
+                      // =========================================
+
+                      AnimatedContainer(
+                        duration:
+                            const Duration(
+                          milliseconds:
+                              450,
+                        ),
+                        width:
+                            double.infinity,
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
+                          horizontal: 7,
+                          vertical: 6,
+                        ),
+                        decoration:
+                            BoxDecoration(
+                          color:
+                              Colors.white
+                                  .withValues(
+                            alpha: 0.93,
+                          ),
+                          borderRadius:
+                              BorderRadius
+                                  .circular(
+                            14,
+                          ),
+                          border:
+                              Border.all(
+                            color: widget
+                                    .animateUnlock
+                                ? const Color(
+                                    0xFFFFD23F,
+                                  )
+                                : locked
+                                    ? const Color(
+                                        0xFFD6DEE2,
+                                      )
+                                    : const Color(
+                                        0xFFDDE9D3,
+                                      ),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  Colors.black
+                                      .withValues(
+                                alpha:
+                                    0.08,
+                              ),
+                              blurRadius:
+                                  6,
+                              offset:
+                                  const Offset(
+                                0,
+                                3,
+                              ),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize:
+                              MainAxisSize
+                                  .min,
+                          children: [
+                            Text(
+                              widget
+                                  .mission
+                                  .title,
+                              textAlign:
+                                  TextAlign
+                                      .center,
+                              maxLines: 2,
+                              overflow:
+                                  TextOverflow
+                                      .ellipsis,
+                              style:
+                                  TextStyle(
+                                color: locked
+                                    ? const Color(
+                                        0xFF7F8D93,
+                                      )
+                                    : const Color(
+                                        0xFF2D7A3F,
+                                      ),
+                                fontSize:
+                                    10,
+                                height:
+                                    1.1,
+                                fontWeight:
+                                    FontWeight
+                                        .w800,
+                              ),
+                            ),
+
+                            const SizedBox(
+                              height: 3,
+                            ),
+
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment
+                                      .center,
+                              children: [
+                                Icon(
+                                  Icons
+                                      .star_rounded,
+                                  color: locked
+                                      ? const Color(
+                                          0xFFC7CED2,
+                                        )
+                                      : const Color(
+                                          0xFFFFD23F,
+                                        ),
+                                  size:
+                                      18,
                                 ),
-                          fontSize: 10,
-                          fontWeight:
-                              FontWeight
-                                  .w800,
+
+                                const SizedBox(
+                                  width: 2,
+                                ),
+
+                                Text(
+                                  '+${widget.mission.reward}',
+                                  style:
+                                      TextStyle(
+                                    color: locked
+                                        ? const Color(
+                                            0xFF9AA6AC,
+                                          )
+                                        : const Color(
+                                            0xFF6B5200,
+                                          ),
+                                    fontSize:
+                                        10,
+                                    fontWeight:
+                                        FontWeight
+                                            .w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+
+              // ===============================================
+              // DESTELLOS
+              // ===============================================
+
+              if (widget
+                  .animateUnlock) ...[
+                Positioned(
+                  top: -18,
+                  right: 4,
+                  child: Transform.scale(
+                    scale:
+                        0.8 +
+                            (glow *
+                                0.4),
+                    child:
+                        const Icon(
+                      Icons
+                          .auto_awesome_rounded,
+                      color:
+                          Color(
+                        0xFFFFD23F,
+                      ),
+                      size: 25,
+                    ),
+                  ),
+                ),
+
+                Positioned(
+                  top: 17,
+                  left: -12,
+                  child: Transform.scale(
+                    scale:
+                        0.7 +
+                            (glow *
+                                0.4),
+                    child:
+                        const Icon(
+                      Icons.star_rounded,
+                      color:
+                          Color(
+                        0xFFFFE27A,
+                      ),
+                      size: 18,
+                    ),
+                  ),
+                ),
+
+                Positioned(
+                  right: -9,
+                  bottom: 21,
+                  child: Transform.scale(
+                    scale:
+                        0.7 +
+                            (glow *
+                                0.4),
+                    child:
+                        const Icon(
+                      Icons
+                          .auto_awesome_rounded,
+                      color:
+                          Color(
+                        0xFF8FD14F,
+                      ),
+                      size: 19,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
+
+  // =============================================================
+  // COLOR DE MISIÓN
+  // =============================================================
 
   Color _missionColor(
     MissionData mission,
   ) {
     if (mission.icon ==
-        Icons
-            .local_florist_rounded) {
+        Icons.local_florist_rounded) {
       return const Color(
         0xFF59B83A,
       );
     }
 
     if (mission.icon ==
-        Icons
-            .water_drop_rounded) {
+        Icons.water_drop_rounded) {
       return const Color(
         0xFF3BAEEB,
       );
@@ -927,8 +1561,7 @@ class MissionNode
     }
 
     if (mission.icon ==
-        Icons
-            .directions_bike_rounded) {
+        Icons.directions_bike_rounded) {
       return const Color(
         0xFF006080,
       );
@@ -968,7 +1601,8 @@ class MissionsBottomNavigation
       ),
       decoration:
           BoxDecoration(
-        color: Colors.white.withValues(
+        color:
+            Colors.white.withValues(
           alpha: 0.96,
         ),
         borderRadius:
@@ -1011,30 +1645,26 @@ class MissionsBottomNavigation
             ),
 
             const _NavItem(
-              icon:
-                  Icons
-                      .sports_esports_rounded,
+              icon: Icons
+                  .sports_esports_rounded,
               label: 'Juegos',
             ),
 
             const _NavItem(
-              icon:
-                  Icons
-                      .menu_book_rounded,
+              icon: Icons
+                  .menu_book_rounded,
               label: 'Aprender',
             ),
 
             const _NavItem(
-              icon:
-                  Icons
-                      .emoji_events_rounded,
+              icon: Icons
+                  .emoji_events_rounded,
               label: 'Logros',
             ),
 
             const _NavItem(
-              icon:
-                  Icons
-                      .chat_bubble_rounded,
+              icon: Icons
+                  .chat_bubble_rounded,
               label: 'Torti',
             ),
           ],
@@ -1045,7 +1675,7 @@ class MissionsBottomNavigation
 }
 
 // =====================================================================
-// ITEM NAVEGACIÓN
+// ITEM DE NAVEGACIÓN
 // =====================================================================
 
 class _NavItem
@@ -1103,8 +1733,7 @@ class _NavItem
                 ),
                 fontSize: 9,
                 fontWeight:
-                    FontWeight
-                        .w600,
+                    FontWeight.w600,
               ),
             ),
           ],

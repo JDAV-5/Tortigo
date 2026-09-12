@@ -5,292 +5,780 @@ class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
 
   @override
-  State<OnboardingPage> createState() => _OnboardingPageState();
+  State<OnboardingPage> createState() =>
+      _OnboardingPageState();
 }
 
-class _OnboardingPageState extends State<OnboardingPage> {
+class _OnboardingPageState
+    extends State<OnboardingPage>
+    with TickerProviderStateMixin {
+  // ============================================================
+  // CONTROLADORES
+  // ============================================================
+
+  late final AnimationController _introController;
+  late final AnimationController _floatingController;
+
+  // ============================================================
+  // TORTI
+  // ============================================================
+
+  late final Animation<double> _tortiOpacity;
+  late final Animation<double> _tortiScale;
+  late final Animation<Offset> _tortiSlide;
+
+  // ============================================================
+  // LOGO
+  // ============================================================
+
+  late final Animation<double> _logoOpacity;
+  late final Animation<double> _logoScale;
+
+  // ============================================================
+  // FLOTACIÓN
+  // ============================================================
+
+  late final Animation<double> _floatingY;
+  late final Animation<double> _floatingRotation;
+
+  bool _navigated = false;
+
+  // ============================================================
+  // INIT
+  // ============================================================
+
   @override
-void initState() {
-  super.initState();
-  _goToLogin();
-}
+  void initState() {
+    super.initState();
+
+    // ----------------------------------------------------------
+    // ANIMACIÓN PRINCIPAL
+    // ----------------------------------------------------------
+
+    _introController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 1900,
+      ),
+    );
+
+    // ----------------------------------------------------------
+    // TORTI - OPACIDAD
+    // ----------------------------------------------------------
+
+    _tortiOpacity = CurvedAnimation(
+      parent: _introController,
+      curve: const Interval(
+        0.0,
+        0.45,
+        curve: Curves.easeOut,
+      ),
+    );
+
+    // ----------------------------------------------------------
+    // TORTI - ESCALA
+    // ----------------------------------------------------------
+
+    _tortiScale = Tween<double>(
+      begin: 0.72,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _introController,
+        curve: const Interval(
+          0.0,
+          0.65,
+          curve: Curves.easeOutBack,
+        ),
+      ),
+    );
+
+    // ----------------------------------------------------------
+    // TORTI - SUBE DESDE ABAJO
+    // ----------------------------------------------------------
+
+    _tortiSlide = Tween<Offset>(
+      begin: const Offset(
+        0,
+        0.28,
+      ),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _introController,
+        curve: const Interval(
+          0.0,
+          0.65,
+          curve: Curves.easeOutCubic,
+        ),
+      ),
+    );
+
+    // ----------------------------------------------------------
+    // LOGO - OPACIDAD
+    // ----------------------------------------------------------
+
+    _logoOpacity = CurvedAnimation(
+      parent: _introController,
+      curve: const Interval(
+        0.38,
+        0.90,
+        curve: Curves.easeOut,
+      ),
+    );
+
+    // ----------------------------------------------------------
+    // LOGO - EFECTO POP
+    // ----------------------------------------------------------
+
+    _logoScale = Tween<double>(
+      begin: 0.55,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _introController,
+        curve: const Interval(
+          0.38,
+          1.0,
+          curve: Curves.elasticOut,
+        ),
+      ),
+    );
+
+    // ----------------------------------------------------------
+    // MOVIMIENTO SUAVE DE TORTI
+    // ----------------------------------------------------------
+
+    _floatingController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 1800,
+      ),
+    );
+
+    _floatingY = Tween<double>(
+      begin: -5,
+      end: 5,
+    ).animate(
+      CurvedAnimation(
+        parent: _floatingController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _floatingRotation = Tween<double>(
+      begin: -0.012,
+      end: 0.012,
+    ).animate(
+      CurvedAnimation(
+        parent: _floatingController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _startIntro();
+  }
+
+  // ============================================================
+  // INICIAR INTRO
+  // ============================================================
+
+  Future<void> _startIntro() async {
+    await Future.delayed(
+      const Duration(
+        milliseconds: 150,
+      ),
+    );
+
+    if (!mounted) return;
+
+    _introController.forward();
+
+    await Future.delayed(
+      const Duration(
+        milliseconds: 1100,
+      ),
+    );
+
+    if (!mounted) return;
+
+    _floatingController.repeat(
+      reverse: true,
+    );
+
+    // ----------------------------------------------------------
+    // TIEMPO TOTAL EN SPLASH
+    // ----------------------------------------------------------
+
+    await Future.delayed(
+      const Duration(
+        milliseconds: 2350,
+      ),
+    );
+
+    if (!mounted) return;
+
+    _goToLogin();
+  }
+
+  // ============================================================
+  // IR AL LOGIN
+  // ============================================================
 
   Future<void> _goToLogin() async {
-  await Future.delayed(
-    const Duration(seconds: 2),
-  );
+    if (_navigated) return;
 
-  if (!mounted) return;
+    _navigated = true;
 
-  Navigator.pushReplacementNamed(
-    context,
-    '/login',
-  );
-}
+    HapticFeedback.selectionClick();
+
+    if (!mounted) return;
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/login',
+    );
+  }
+
+  // ============================================================
+  // DISPOSE
+  // ============================================================
+
+  @override
+  void dispose() {
+    _introController.dispose();
+    _floatingController.dispose();
+
+    super.dispose();
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemStatusBarContrastEnforced: false,
+        statusBarIconBrightness:
+            Brightness.light,
+        statusBarBrightness:
+            Brightness.dark,
+        systemStatusBarContrastEnforced:
+            false,
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFF00506B),
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            const CustomPaint(
-              painter: TortoGoBackgroundPainter(),
-            ),
+        backgroundColor: const Color(
+          0xFF00506B,
+        ),
+        body: LayoutBuilder(
+          builder: (
+            context,
+            constraints,
+          ) {
+            final width =
+                constraints.maxWidth;
 
-            Center(
-              child: Image.asset(
-                'assets/images/tortigo_logo.png',
-                width: MediaQuery.of(context).size.width * 0.78,
-                fit: BoxFit.contain,
+            final height =
+                constraints.maxHeight;
+
+            return GestureDetector(
+              behavior:
+                  HitTestBehavior.opaque,
+
+              // Permite saltar la intro tocando.
+              onTap: () {
+                if (_introController.value >
+                    0.65) {
+                  _goToLogin();
+                }
+              },
+
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // =================================================
+                  // NUEVO FONDO
+                  // =================================================
+
+                  Image.asset(
+                    'assets/images/fondo1.png',
+                    fit: BoxFit.cover,
+                    alignment:
+                        Alignment.center,
+                  ),
+
+                  // =================================================
+                  // CAPA SUAVE
+                  //
+                  // Ayuda a que Torti y el logo resalten sobre
+                  // cualquier zona clara del fondo.
+                  // =================================================
+
+                  Container(
+                    color: Colors.black
+                        .withValues(
+                      alpha: 0.04,
+                    ),
+                  ),
+
+                  // =================================================
+                  // BRILLO CENTRAL DETRÁS DE TORTI
+                  // =================================================
+
+                  AnimatedBuilder(
+                    animation:
+                        _floatingController,
+                    builder: (
+                      context,
+                      child,
+                    ) {
+                      final pulse =
+                          _floatingController
+                              .value;
+
+                      return Positioned(
+                        top: height * 0.14,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Opacity(
+                            opacity:
+                                0.10 +
+                                (pulse * 0.07),
+                            child:
+                                Transform.scale(
+                              scale:
+                                  0.92 +
+                                  (pulse *
+                                      0.08),
+                              child:
+                                  Container(
+                                width:
+                                    width *
+                                    0.78,
+                                height:
+                                    width *
+                                    0.78,
+                                decoration:
+                                    const BoxDecoration(
+                                  shape:
+                                      BoxShape
+                                          .circle,
+                                  gradient:
+                                      RadialGradient(
+                                    colors: [
+                                      Colors
+                                          .white,
+                                      Colors
+                                          .transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  // =================================================
+                  // DESTELLO IZQUIERDO
+                  // =================================================
+
+                  Positioned(
+                    top:
+                        height *
+                        0.21,
+                    left:
+                        width *
+                        0.13,
+                    child:
+                        _AnimatedSparkle(
+                      controller:
+                          _floatingController,
+                      size: 22,
+                    ),
+                  ),
+
+                  // =================================================
+                  // DESTELLO DERECHO
+                  // =================================================
+
+                  Positioned(
+                    top:
+                        height *
+                        0.31,
+                    right:
+                        width *
+                        0.12,
+                    child:
+                        _AnimatedSparkle(
+                      controller:
+                          _floatingController,
+                      size: 17,
+                      reverse: true,
+                    ),
+                  ),
+
+                  // =================================================
+                  // HOJA DECORATIVA
+                  // =================================================
+
+                  Positioned(
+                    top:
+                        height *
+                        0.48,
+                    right:
+                        width *
+                        0.09,
+                    child:
+                        FadeTransition(
+                      opacity:
+                          _logoOpacity,
+                      child:
+                          const Icon(
+                        Icons.eco_rounded,
+                        color:
+                            Color(
+                          0xFF8FD14F,
+                        ),
+                        size: 25,
+                      ),
+                    ),
+                  ),
+
+                  // =================================================
+// TORTI
+// =================================================
+
+Positioned(
+  // Antes: 0.16
+  // Más grande el valor = más abajo
+  top: height * 0.36,
+  left: 0,
+  right: 0,
+  child: FadeTransition(
+    opacity: _tortiOpacity,
+    child: SlideTransition(
+      position: _tortiSlide,
+      child: ScaleTransition(
+        scale: _tortiScale,
+        child: AnimatedBuilder(
+          animation: _floatingController,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(
+                0,
+                _floatingY.value,
               ),
+              child: Transform.rotate(
+                angle: _floatingRotation.value,
+                alignment: Alignment.bottomCenter,
+                child: child,
+              ),
+            );
+          },
+          child: Center(
+            child: Image.asset(
+              'assets/images/tortigo_splash.png',
+              // Antes: 0.62
+              // Más grande = más tamaño
+              width: width * 0.74,
+              fit: BoxFit.contain,
             ),
-          ],
+          ),
+        ),
+      ),
+    ),
+  ),
+),
+
+                  // =================================================
+                  // LOGO TORTIGO
+                  // =================================================
+
+                  Positioned(
+                    top:
+                        height *
+                        0.60,
+                    left:
+                        width *
+                        0.10,
+                    right:
+                        width *
+                        0.10,
+                    child:
+                        FadeTransition(
+                      opacity:
+                          _logoOpacity,
+                      child:
+                          ScaleTransition(
+                        scale:
+                            _logoScale,
+                        child:
+                            Image.asset(
+                          'assets/images/tortigo_logo1.png',
+                          fit:
+                              BoxFit
+                                  .contain,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // =================================================
+                  // TEXTO
+                  // =================================================
+
+                  Positioned(
+                    top:
+                        height *
+                        0.75,
+                    left: 20,
+                    right: 20,
+                    child:
+                        FadeTransition(
+                      opacity:
+                          _logoOpacity,
+                      child:
+                          const Text(
+                        '¡Aprende, juega y cuida el planeta!',
+                        textAlign:
+                            TextAlign
+                                .center,
+                        style:
+                            TextStyle(
+                          color:
+                              Colors
+                                  .white,
+                          fontSize:
+                              15,
+                          fontWeight:
+                              FontWeight
+                                  .w700,
+                          letterSpacing:
+                              0.2,
+                          shadows: [
+                            Shadow(
+                              color:
+                                  Colors
+                                      .black38,
+                              blurRadius:
+                                  6,
+                              offset:
+                                  Offset(
+                                0,
+                                2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // =================================================
+                  // INDICADOR DE CARGA
+                  // =================================================
+
+                  Positioned(
+                    bottom:
+                        MediaQuery
+                                .paddingOf(
+                                  context,
+                                )
+                                .bottom +
+                            25,
+                    left: 0,
+                    right: 0,
+                    child:
+                        FadeTransition(
+                      opacity:
+                          _logoOpacity,
+                      child:
+                          const Center(
+                        child:
+                            _LoadingDots(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class TortoGoBackgroundPainter extends CustomPainter {
-  const TortoGoBackgroundPainter();
+// =====================================================================
+// DESTELLO ANIMADO
+// =====================================================================
+
+class _AnimatedSparkle
+    extends StatelessWidget {
+  final AnimationController controller;
+
+  final double size;
+
+  final bool reverse;
+
+  const _AnimatedSparkle({
+    required this.controller,
+    required this.size,
+    this.reverse = false,
+  });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    // =========================================================
-    // FONDO PRINCIPAL
-    // =========================================================
+  Widget build(
+    BuildContext context,
+  ) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (
+        context,
+        child,
+      ) {
+        final value = reverse
+            ? 1 -
+                controller.value
+            : controller.value;
 
-    final backgroundPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xFF006080),
-          Color(0xFF004A69),
-          Color(0xFF003D5B),
-        ],
-        stops: [
-          0.0,
-          0.55,
-          1.0,
-        ],
-      ).createShader(
-        Rect.fromLTWH(
-          0,
-          0,
-          size.width,
-          size.height,
+        return Opacity(
+          opacity:
+              0.30 +
+              (value * 0.70),
+          child:
+              Transform.scale(
+            scale:
+                0.65 +
+                (value * 0.45),
+            child:
+                Transform.rotate(
+              angle:
+                  value * 0.35,
+              child:
+                  child,
+            ),
+          ),
+        );
+      },
+      child: Icon(
+        Icons.auto_awesome_rounded,
+        color:
+            const Color(
+          0xFFFFD23F,
         ),
-      );
-
-    canvas.drawRect(
-      Rect.fromLTWH(
-        0,
-        0,
-        size.width,
-        size.height,
+        size: size,
       ),
-      backgroundPaint,
     );
+  }
+}
 
-    // =========================================================
-    // MANCHA SUPERIOR IZQUIERDA
-    // =========================================================
+// =====================================================================
+// PUNTOS DE CARGA
+// =====================================================================
 
-    final topBlob = Path();
+class _LoadingDots
+    extends StatefulWidget {
+  const _LoadingDots();
 
-    topBlob.moveTo(0, 0);
+  @override
+  State<_LoadingDots>
+      createState() =>
+          _LoadingDotsState();
+}
 
-    topBlob.lineTo(
-      size.width * 0.38,
-      0,
-    );
+class _LoadingDotsState
+    extends State<_LoadingDots>
+    with
+        SingleTickerProviderStateMixin {
+  late final AnimationController
+      _controller;
 
-    topBlob.cubicTo(
-      size.width * 0.38,
-      size.height * 0.045,
-      size.width * 0.36,
-      size.height * 0.065,
-      size.width * 0.31,
-      size.height * 0.080,
-    );
+  @override
+  void initState() {
+    super.initState();
 
-    topBlob.cubicTo(
-      size.width * 0.23,
-      size.height * 0.105,
-      size.width * 0.19,
-      size.height * 0.150,
-      size.width * 0.14,
-      size.height * 0.185,
-    );
-
-    topBlob.cubicTo(
-      size.width * 0.09,
-      size.height * 0.220,
-      size.width * 0.04,
-      size.height * 0.230,
-      0,
-      size.height * 0.235,
-    );
-
-    topBlob.close();
-
-    final topBlobPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xFFAFCBFF),
-          Color(0xFF8FB8FF),
-          Color(0xFF719DF4),
-        ],
-      ).createShader(
-        Rect.fromLTWH(
-          0,
-          0,
-          size.width * 0.40,
-          size.height * 0.25,
-        ),
-      );
-
-    canvas.drawPath(
-      topBlob,
-      topBlobPaint,
-    );
-
-    // =========================================================
-    // LÍNEA DECORATIVA INFERIOR
-    // =========================================================
-
-    final linePath = Path();
-
-    linePath.moveTo(
-      size.width * 0.48,
-      size.height,
-    );
-
-    linePath.cubicTo(
-      size.width * 0.49,
-      size.height * 0.94,
-      size.width * 0.55,
-      size.height * 0.91,
-      size.width * 0.62,
-      size.height * 0.89,
-    );
-
-    linePath.cubicTo(
-      size.width * 0.73,
-      size.height * 0.85,
-      size.width * 0.76,
-      size.height * 0.78,
-      size.width * 0.80,
-      size.height * 0.73,
-    );
-
-    linePath.cubicTo(
-      size.width * 0.87,
-      size.height * 0.65,
-      size.width * 0.92,
-      size.height * 0.63,
-      size.width,
-      size.height * 0.62,
-    );
-
-    final linePaint = Paint()
-      ..color = const Color(0xFF6399DA).withValues(
-        alpha: 0.55,
-      )
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 5
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawPath(
-      linePath,
-      linePaint,
-    );
-
-    // =========================================================
-    // MANCHA INFERIOR DERECHA
-    // =========================================================
-
-    final bottomBlob = Path();
-
-    bottomBlob.moveTo(
-      size.width * 0.58,
-      size.height,
-    );
-
-    bottomBlob.cubicTo(
-      size.width * 0.59,
-      size.height * 0.96,
-      size.width * 0.62,
-      size.height * 0.94,
-      size.width * 0.67,
-      size.height * 0.925,
-    );
-
-    bottomBlob.cubicTo(
-      size.width * 0.76,
-      size.height * 0.90,
-      size.width * 0.79,
-      size.height * 0.86,
-      size.width * 0.84,
-      size.height * 0.82,
-    );
-
-    bottomBlob.cubicTo(
-      size.width * 0.90,
-      size.height * 0.77,
-      size.width * 0.95,
-      size.height * 0.76,
-      size.width,
-      size.height * 0.76,
-    );
-
-    bottomBlob.lineTo(
-      size.width,
-      size.height,
-    );
-
-    bottomBlob.close();
-
-    final bottomBlobPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xFF97BDFF),
-          Color(0xFF719DF4),
-          Color(0xFF547DD9),
-        ],
-      ).createShader(
-        Rect.fromLTWH(
-          size.width * 0.55,
-          size.height * 0.75,
-          size.width * 0.45,
-          size.height * 0.25,
-        ),
-      );
-
-    canvas.drawPath(
-      bottomBlob,
-      bottomBlobPaint,
-    );
+    _controller =
+        AnimationController(
+      vsync: this,
+      duration:
+          const Duration(
+        milliseconds: 1000,
+      ),
+    )..repeat();
   }
 
   @override
-  bool shouldRepaint(
-    covariant CustomPainter oldDelegate,
+  void dispose() {
+    _controller.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(
+    BuildContext context,
   ) {
-    return false;
+    return AnimatedBuilder(
+      animation:
+          _controller,
+      builder: (
+        context,
+        child,
+      ) {
+        return Row(
+          mainAxisSize:
+              MainAxisSize.min,
+          children:
+              List.generate(
+            3,
+            (index) {
+              final phase =
+                  (_controller.value *
+                          3 -
+                      index)
+                      .abs();
+
+              final opacity =
+                  (1 -
+                          phase.clamp(
+                            0.0,
+                            1.0,
+                          ))
+                      .clamp(
+                        0.35,
+                        1.0,
+                      );
+
+              return Container(
+                margin:
+                    const EdgeInsets
+                        .symmetric(
+                  horizontal: 4,
+                ),
+                width: 8,
+                height: 8,
+                decoration:
+                    BoxDecoration(
+                  color: Colors.white
+                      .withValues(
+                    alpha:
+                        opacity,
+                  ),
+                  shape:
+                      BoxShape.circle,
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 }
