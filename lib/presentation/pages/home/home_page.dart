@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../torti_chat/torti_chat_page.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -18,17 +20,21 @@ class HomePage extends StatelessWidget {
         systemStatusBarContrastEnforced: false,
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFF236B3A),
+        backgroundColor: const Color(
+          0xFF236B3A,
+        ),
 
         // =====================================================
         // BODY
         // =====================================================
+
         body: Stack(
           fit: StackFit.expand,
           children: [
             // =================================================
             // FONDO
             // =================================================
+
             Image.asset(
               'assets/images/fondo3.png',
               fit: BoxFit.cover,
@@ -38,6 +44,7 @@ class HomePage extends StatelessWidget {
             // =================================================
             // CAPA SUAVE
             // =================================================
+
             Container(
               color: Colors.black.withValues(
                 alpha: 0.02,
@@ -47,6 +54,7 @@ class HomePage extends StatelessWidget {
             // =================================================
             // CONTENIDO
             // =================================================
+
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -61,9 +69,13 @@ class HomePage extends StatelessWidget {
                     // =================================================
                     // CABECERA
                     // =================================================
+
                     Row(
                       children: [
+                        // =============================================
                         // AVATAR
+                        // =============================================
+
                         Container(
                           width: 45,
                           height: 45,
@@ -91,14 +103,23 @@ class HomePage extends StatelessWidget {
                               ),
                             ],
                           ),
-                         
+                          alignment: Alignment.center,
+                          child: const Text(
+                            '🐢',
+                            style: TextStyle(
+                              fontSize: 25,
+                            ),
+                          ),
                         ),
 
                         const SizedBox(
                           width: 10,
                         ),
 
+                        // =============================================
                         // SALUDO
+                        // =============================================
+
                         Expanded(
                           child: Column(
                             crossAxisAlignment:
@@ -116,8 +137,10 @@ class HomePage extends StatelessWidget {
                                       color:
                                           Colors.black38,
                                       blurRadius: 5,
-                                      offset:
-                                          Offset(0, 2),
+                                      offset: Offset(
+                                        0,
+                                        2,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -146,50 +169,99 @@ class HomePage extends StatelessWidget {
                           ),
                         ),
 
+                        // =============================================
                         // ESTRELLAS
-                       
+                        // =============================================
+
+                        Container(
+                          padding:
+                              const EdgeInsets.symmetric(
+                            horizontal: 11,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF236B3A,
+                            ).withValues(
+                              alpha: 0.72,
+                            ),
+                            borderRadius:
+                                BorderRadius.circular(
+                              18,
+                            ),
+                            border: Border.all(
+                              color: Colors.white
+                                  .withValues(
+                                alpha: 0.20,
+                              ),
+                            ),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
+                                color: Color(
+                                  0xFFFFD23F,
+                                ),
+                                size: 20,
+                              ),
+                              SizedBox(
+                                width: 5,
+                              ),
+                              Text(
+                                '0',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight:
+                                      FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
 
-                   // =================================================
-// TORTI LEYENDO
-// =================================================
+                    // =================================================
+                    // TORTI LEYENDO
+                    // =================================================
 
-const SizedBox(
-  height: 2,
-),
+                    const SizedBox(
+                      height: 2,
+                    ),
 
-Align(
-  alignment: Alignment.centerRight,
-  child: Padding(
-    padding: const EdgeInsets.only(
-      right: 1,
-    ),
-    child: Image.asset(
-      'assets/images/torti_read.png',
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          right: 1,
+                        ),
+                        child: Image.asset(
+                          'assets/images/torti_read.png',
+                          height: 170,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
 
-      // Cambia este valor para hacerlo
-      // más grande o más pequeño.
-      height: 170,
-
-      fit: BoxFit.contain,
-    ),
-  ),
-),
-
-const SizedBox(
-  height: 5,
-),
+                    const SizedBox(
+                      height: 5,
+                    ),
 
                     // =================================================
                     // FILA 1
                     // =================================================
+
                     Row(
                       children: [
+                        // =============================================
                         // MISIONES
+                        // =============================================
+
                         Expanded(
                           child: _HomeOptionCard(
-                            title: 'Misiones\necológicas',
+                            title:
+                                'Misiones\necológicas',
                             subtitle:
                                 'Completa retos y ayuda al planeta',
                             icon: Icons.eco_rounded,
@@ -213,10 +285,14 @@ const SizedBox(
                           width: 12,
                         ),
 
+                        // =============================================
                         // JUEGOS
+                        // =============================================
+
                         Expanded(
                           child: _HomeOptionCard(
-                            title: 'Juegos\neducativos',
+                            title:
+                                'Juegos\neducativos',
                             subtitle:
                                 'Aprende jugando y diviértete',
                             icon: Icons
@@ -245,9 +321,13 @@ const SizedBox(
                     // =================================================
                     // FILA 2
                     // =================================================
+
                     Row(
                       children: [
+                        // =============================================
                         // APRENDE
+                        // =============================================
+
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Aprende',
@@ -274,7 +354,10 @@ const SizedBox(
                           width: 12,
                         ),
 
+                        // =============================================
                         // LOGROS
+                        // =============================================
+
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Logros',
@@ -304,6 +387,7 @@ const SizedBox(
                     // =================================================
                     // FRASE
                     // =================================================
+
                     Container(
                       width: double.infinity,
                       padding:
@@ -312,7 +396,8 @@ const SizedBox(
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(
+                        color: Colors.white
+                            .withValues(
                           alpha: 0.94,
                         ),
                         borderRadius:
@@ -334,8 +419,10 @@ const SizedBox(
                               alpha: 0.15,
                             ),
                             blurRadius: 10,
-                            offset:
-                                const Offset(0, 4),
+                            offset: const Offset(
+                              0,
+                              4,
+                            ),
                           ),
                         ],
                       ),
@@ -350,11 +437,9 @@ const SizedBox(
                             ),
                             size: 26,
                           ),
-
                           SizedBox(
                             width: 9,
                           ),
-
                           Flexible(
                             child: Text(
                               'Pequeñas acciones hacen grandes cambios',
@@ -388,6 +473,7 @@ const SizedBox(
         // =====================================================
         // BARRA DE NAVEGACIÓN
         // =====================================================
+
         bottomNavigationBar: Container(
           margin: const EdgeInsets.fromLTRB(
             18,
@@ -413,7 +499,8 @@ const SizedBox(
               ),
             ],
           ),
-          child: const SafeArea(
+
+          child: SafeArea(
             top: false,
             child: SizedBox(
               height: 66,
@@ -421,33 +508,70 @@ const SizedBox(
                 mainAxisAlignment:
                     MainAxisAlignment.spaceAround,
                 children: [
-                  _BottomNavItem(
+                  // =============================================
+                  // INICIO
+                  // =============================================
+
+                  const _BottomNavItem(
                     icon: Icons.home_rounded,
                     label: 'Inicio',
                     selected: true,
                   ),
 
-                  _BottomNavItem(
+                  // =============================================
+                  // JUEGOS
+                  // =============================================
+
+                  const _BottomNavItem(
                     icon:
                         Icons.sports_esports_rounded,
                     label: 'Juegos',
                   ),
 
-                  _BottomNavItem(
-                    icon: Icons.menu_book_rounded,
+                  // =============================================
+                  // APRENDE
+                  // =============================================
+
+                  const _BottomNavItem(
+                    icon:
+                        Icons.menu_book_rounded,
                     label: 'Aprende',
                   ),
 
-                  _BottomNavItem(
+                  // =============================================
+                  // LOGROS
+                  // =============================================
+
+                  const _BottomNavItem(
                     icon:
                         Icons.emoji_events_rounded,
                     label: 'Logros',
                   ),
 
+                  // =============================================
+                  // TORTI
+                  // =============================================
+
                   _BottomNavItem(
                     icon:
                         Icons.chat_bubble_rounded,
                     label: 'Torti',
+                    onTap: () {
+                      HapticFeedback
+                          .selectionClick();
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return TortiChatPage(
+                              playerName:
+                                  playerName,
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -526,7 +650,6 @@ class _HomeOptionCard extends StatelessWidget {
               ),
             ],
           ),
-
           child: Row(
             children: [
               // ===============================================
@@ -586,8 +709,7 @@ class _HomeOptionCard extends StatelessWidget {
                           TextOverflow.ellipsis,
                       textAlign:
                           TextAlign.center,
-                      style:
-                          const TextStyle(
+                      style: const TextStyle(
                         color: Color(
                           0xFF59666D,
                         ),
@@ -617,10 +739,14 @@ class _BottomNavItem extends StatelessWidget {
   final String label;
   final bool selected;
 
+  // Acción opcional.
+  final VoidCallback? onTap;
+
   const _BottomNavItem({
     required this.icon,
     required this.label,
     this.selected = false,
+    this.onTap,
   });
 
   @override
@@ -633,31 +759,58 @@ class _BottomNavItem extends StatelessWidget {
             0xFF7B878D,
           );
 
-    return Column(
-      mainAxisAlignment:
-          MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: color,
-          size: 23,
+    return Material(
+      color: Colors.transparent,
+
+      child: InkWell(
+        onTap: onTap,
+
+        borderRadius:
+            BorderRadius.circular(
+          14,
         ),
 
-        const SizedBox(
-          height: 3,
-        ),
+        child: Padding(
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 9,
+            vertical: 7,
+          ),
 
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 9,
-            fontWeight: selected
-                ? FontWeight.w700
-                : FontWeight.w500,
+          child: Column(
+            mainAxisSize:
+                MainAxisSize.min,
+
+            mainAxisAlignment:
+                MainAxisAlignment.center,
+
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: 23,
+              ),
+
+              const SizedBox(
+                height: 3,
+              ),
+
+              Text(
+                label,
+
+                style: TextStyle(
+                  color: color,
+                  fontSize: 9,
+
+                  fontWeight: selected
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
