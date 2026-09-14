@@ -7,16 +7,18 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final playerName =
-        ModalRoute.of(context)?.settings.arguments as String? ?? 'Héroe';
+        ModalRoute.of(context)?.settings.arguments as String? ??
+            'Héroe';
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
         systemStatusBarContrastEnforced: false,
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFF00506B),
+        backgroundColor: const Color(0xFF236B3A),
 
         // =====================================================
         // BODY
@@ -24,12 +26,27 @@ class HomePage extends StatelessWidget {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // Fondo
-            const CustomPaint(
-              painter: HomeBackgroundPainter(),
+            // =================================================
+            // FONDO
+            // =================================================
+            Image.asset(
+              'assets/images/fondo3.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
             ),
 
-            // Contenido
+            // =================================================
+            // CAPA SUAVE
+            // =================================================
+            Container(
+              color: Colors.black.withValues(
+                alpha: 0.02,
+              ),
+            ),
+
+            // =================================================
+            // CONTENIDO
+            // =================================================
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -37,128 +54,132 @@ class HomePage extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const SizedBox(height: 12),
+                    const SizedBox(
+                      height: 8,
+                    ),
 
                     // =================================================
                     // CABECERA
                     // =================================================
                     Row(
                       children: [
-                        // Avatar
+                        // AVATAR
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 45,
+                          height: 45,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFF8FB8FF),
+                              color: const Color(
+                                0xFF59B83A,
+                              ),
                               width: 2,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF236B3A,
+                                ).withValues(
+                                  alpha: 0.18,
+                                ),
+                                blurRadius: 8,
+                                offset: const Offset(
+                                  0,
+                                  3,
+                                ),
+                              ),
+                            ],
                           ),
-                          alignment: Alignment.center,
-                          child: const Text(
-                            '🐢',
-                            style: TextStyle(
-                              fontSize: 27,
-                            ),
-                          ),
+                         
                         ),
 
-                        const SizedBox(width: 12),
+                        const SizedBox(
+                          width: 10,
+                        ),
 
-                        // Saludo
+                        // SALUDO
                         Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
                             children: [
                               Text(
                                 '¡Hola, $playerName!',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 20,
+                                  fontWeight:
+                                      FontWeight.w800,
+                                  shadows: [
+                                    Shadow(
+                                      color:
+                                          Colors.black38,
+                                      blurRadius: 5,
+                                      offset:
+                                          Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
                               ),
+
                               Text(
                                 '¿Qué aprenderemos hoy?',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(
-                                    alpha: 0.75,
+                                  color: Colors.white
+                                      .withValues(
+                                    alpha: 0.90,
                                   ),
-                                  fontSize: 13,
+                                  fontSize: 12,
+                                  fontWeight:
+                                      FontWeight.w500,
+                                  shadows: const [
+                                    Shadow(
+                                      color:
+                                          Colors.black26,
+                                      blurRadius: 4,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
 
-                        // Estrellas
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(
-                              alpha: 0.14,
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.star_rounded,
-                                color: Color(0xFFFFD23F),
-                                size: 21,
-                              ),
-                              SizedBox(width: 5),
-                              Text(
-                                '0',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        // ESTRELLAS
+                       
                       ],
                     ),
 
-                    const SizedBox(height: 35),
+                   // =================================================
+// TORTI LEYENDO
+// =================================================
 
-                    // =================================================
-                    // TÍTULO
-                    // =================================================
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Explora TortiGo',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 25,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
+const SizedBox(
+  height: 2,
+),
 
-                    const SizedBox(height: 6),
+Align(
+  alignment: Alignment.centerRight,
+  child: Padding(
+    padding: const EdgeInsets.only(
+      right: 1,
+    ),
+    child: Image.asset(
+      'assets/images/torti_read.png',
 
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Aprende, juega y ayuda al planeta',
-                        style: TextStyle(
-                          color: Colors.white.withValues(
-                            alpha: 0.72,
-                          ),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
+      // Cambia este valor para hacerlo
+      // más grande o más pequeño.
+      height: 170,
 
-                    const SizedBox(height: 22),
+      fit: BoxFit.contain,
+    ),
+  ),
+),
+
+const SizedBox(
+  height: 5,
+),
 
                     // =================================================
                     // FILA 1
@@ -169,10 +190,16 @@ class HomePage extends StatelessWidget {
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Misiones\necológicas',
-                            subtitle: 'Completa retos',
+                            subtitle:
+                                'Completa retos y ayuda al planeta',
                             icon: Icons.eco_rounded,
-                            iconColor: const Color(0xFF4C82D8),
-                            backgroundColor: const Color(0xFFEAF1FF),
+                            iconColor: const Color(
+                              0xFF45A049,
+                            ),
+                            backgroundColor:
+                                const Color(
+                              0xFFE7F7D8,
+                            ),
                             onTap: () {
                               Navigator.pushNamed(
                                 context,
@@ -182,25 +209,38 @@ class HomePage extends StatelessWidget {
                           ),
                         ),
 
-                        const SizedBox(width: 12),
+                        const SizedBox(
+                          width: 12,
+                        ),
 
                         // JUEGOS
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Juegos\neducativos',
-                            subtitle: 'Aprende jugando',
-                            icon: Icons.sports_esports_rounded,
-                            iconColor: const Color(0xFF006080),
-                            backgroundColor: const Color(0xFFE3F7FA),
+                            subtitle:
+                                'Aprende jugando y diviértete',
+                            icon: Icons
+                                .sports_esports_rounded,
+                            iconColor: const Color(
+                              0xFF318CB8,
+                            ),
+                            backgroundColor:
+                                const Color(
+                              0xFFE5F6FC,
+                            ),
                             onTap: () {
-                              debugPrint('Juegos');
+                              debugPrint(
+                                'Juegos',
+                              );
                             },
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(
+                      height: 12,
+                    ),
 
                     // =================================================
                     // FILA 2
@@ -211,28 +251,48 @@ class HomePage extends StatelessWidget {
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Aprende',
-                            subtitle: 'Explora el planeta',
-                            icon: Icons.menu_book_rounded,
-                            iconColor: const Color(0xFF7158C8),
-                            backgroundColor: const Color(0xFFF1ECFF),
+                            subtitle:
+                                'Explora, escucha y descubre',
+                            icon:
+                                Icons.menu_book_rounded,
+                            iconColor: const Color(
+                              0xFF9C27D8,
+                            ),
+                            backgroundColor:
+                                const Color(
+                              0xFFF6E9FF,
+                            ),
                             onTap: () {
-                              debugPrint('Aprende');
+                              debugPrint(
+                                'Aprende',
+                              );
                             },
                           ),
                         ),
 
-                        const SizedBox(width: 12),
+                        const SizedBox(
+                          width: 12,
+                        ),
 
                         // LOGROS
                         Expanded(
                           child: _HomeOptionCard(
                             title: 'Logros',
-                            subtitle: 'Tus recompensas',
-                            icon: Icons.emoji_events_rounded,
-                            iconColor: const Color(0xFFE8A700),
-                            backgroundColor: const Color(0xFFFFF5D8),
+                            subtitle:
+                                'Gana recompensas y desbloquea medallas',
+                            icon: Icons
+                                .emoji_events_rounded,
+                            iconColor: const Color(
+                              0xFFE8A700,
+                            ),
+                            backgroundColor:
+                                const Color(
+                              0xFFFFF5D8,
+                            ),
                             onTap: () {
-                              debugPrint('Logros');
+                              debugPrint(
+                                'Logros',
+                              );
                             },
                           ),
                         ),
@@ -246,39 +306,68 @@ class HomePage extends StatelessWidget {
                     // =================================================
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
+                      padding:
+                          const EdgeInsets.symmetric(
                         horizontal: 18,
-                        vertical: 14,
+                        vertical: 12,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(
-                          alpha: 0.13,
+                          alpha: 0.94,
                         ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius:
+                            BorderRadius.circular(
+                          20,
+                        ),
                         border: Border.all(
-                          color: Colors.white.withValues(
-                            alpha: 0.12,
+                          color: const Color(
+                            0xFF7BCB4D,
+                          ).withValues(
+                            alpha: 0.40,
                           ),
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF236B3A,
+                            ).withValues(
+                              alpha: 0.15,
+                            ),
+                            blurRadius: 10,
+                            offset:
+                                const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment:
+                            MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.eco_outlined,
-                            color: Color(0xFFAFCBFF),
+                            Icons.eco_rounded,
+                            color: Color(
+                              0xFF59B83A,
+                            ),
+                            size: 26,
                           ),
 
-                          SizedBox(width: 10),
+                          SizedBox(
+                            width: 9,
+                          ),
 
                           Flexible(
                             child: Text(
                               'Pequeñas acciones hacen grandes cambios',
-                              textAlign: TextAlign.center,
+                              textAlign:
+                                  TextAlign.center,
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Color(
+                                  0xFF59666D,
+                                ),
                                 fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                height: 1.15,
+                                fontWeight:
+                                    FontWeight.w500,
                               ),
                             ),
                           ),
@@ -286,7 +375,9 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(
+                      height: 14,
+                    ),
                   ],
                 ),
               ),
@@ -298,44 +389,64 @@ class HomePage extends StatelessWidget {
         // BARRA DE NAVEGACIÓN
         // =====================================================
         bottomNavigationBar: Container(
+          margin: const EdgeInsets.fromLTRB(
+            18,
+            0,
+            18,
+            10,
+          ),
           decoration: BoxDecoration(
             color: Colors.white,
+            borderRadius: BorderRadius.circular(
+              20,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(
-                  alpha: 0.12,
+                  alpha: 0.16,
                 ),
                 blurRadius: 18,
-                offset: const Offset(0, -4),
+                offset: const Offset(
+                  0,
+                  4,
+                ),
               ),
             ],
           ),
-          child: SafeArea(
+          child: const SafeArea(
             top: false,
             child: SizedBox(
-              height: 68,
+              height: 66,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: const [
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceAround,
+                children: [
                   _BottomNavItem(
                     icon: Icons.home_rounded,
                     label: 'Inicio',
                     selected: true,
                   ),
+
                   _BottomNavItem(
-                    icon: Icons.sports_esports_rounded,
+                    icon:
+                        Icons.sports_esports_rounded,
                     label: 'Juegos',
                   ),
+
                   _BottomNavItem(
                     icon: Icons.menu_book_rounded,
                     label: 'Aprende',
                   ),
+
                   _BottomNavItem(
-                    icon: Icons.emoji_events_rounded,
+                    icon:
+                        Icons.emoji_events_rounded,
                     label: 'Logros',
                   ),
+
                   _BottomNavItem(
-                    icon: Icons.chat_bubble_rounded,
+                    icon:
+                        Icons.chat_bubble_rounded,
                     label: 'Torti',
                   ),
                 ],
@@ -373,40 +484,61 @@ class _HomeOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(
+        22,
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(
+          22,
+        ),
         child: Container(
-          height: 140,
-          padding: const EdgeInsets.all(16),
+          height: 112,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius:
+                BorderRadius.circular(
+              22,
+            ),
             border: Border.all(
-              color: Colors.white.withValues(
-                alpha: 0.5,
+              color: const Color(
+                0xFF7BCB4D,
+              ).withValues(
+                alpha: 0.26,
               ),
+              width: 1.4,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: 0.08,
+                color: const Color(
+                  0xFF236B3A,
+                ).withValues(
+                  alpha: 0.12,
                 ),
-                blurRadius: 14,
-                offset: const Offset(0, 7),
+                blurRadius: 12,
+                offset: const Offset(
+                  0,
+                  5,
+                ),
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+
+          child: Row(
             children: [
-              // Icono
+              // ===============================================
+              // ICONO
+              // ===============================================
+
               Container(
-                width: 44,
-                height: 44,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
                   color: backgroundColor,
-                  borderRadius: BorderRadius.circular(14),
+                  shape: BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
@@ -415,27 +547,57 @@ class _HomeOptionCard extends StatelessWidget {
                 ),
               ),
 
-              const Spacer(),
-
-              // Título
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Color(0xFF003D5B),
-                  fontSize: 16,
-                  height: 1.05,
-                  fontWeight: FontWeight.w800,
-                ),
+              const SizedBox(
+                width: 9,
               ),
 
-              const SizedBox(height: 5),
+              // ===============================================
+              // TEXTOS
+              // ===============================================
 
-              // Descripción
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  color: Color(0xFF7B878D),
-                  fontSize: 11,
+              Expanded(
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      textAlign:
+                          TextAlign.center,
+                      style: TextStyle(
+                        color: iconColor,
+                        fontSize: 14,
+                        height: 1.05,
+                        fontWeight:
+                            FontWeight.w800,
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 7,
+                    ),
+
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow:
+                          TextOverflow.ellipsis,
+                      textAlign:
+                          TextAlign.center,
+                      style:
+                          const TextStyle(
+                        color: Color(
+                          0xFF59666D,
+                        ),
+                        fontSize: 8.5,
+                        height: 1.15,
+                        fontWeight:
+                            FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -464,105 +626,38 @@ class _BottomNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = selected
-        ? const Color(0xFF4C82D8)
-        : const Color(0xFF8A969D);
+        ? const Color(
+            0xFF45A049,
+          )
+        : const Color(
+            0xFF7B878D,
+          );
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment:
+          MainAxisAlignment.center,
       children: [
         Icon(
           icon,
           color: color,
-          size: 24,
+          size: 23,
         ),
 
-        const SizedBox(height: 3),
+        const SizedBox(
+          height: 3,
+        ),
 
         Text(
           label,
           style: TextStyle(
             color: color,
-            fontSize: 10,
-            fontWeight:
-                selected ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 9,
+            fontWeight: selected
+                ? FontWeight.w700
+                : FontWeight.w500,
           ),
         ),
       ],
     );
-  }
-}
-
-// =============================================================
-// FONDO
-// =============================================================
-
-class HomeBackgroundPainter extends CustomPainter {
-  const HomeBackgroundPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Fondo principal
-    final paint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFF0080A8),
-          Color(0xFF006080),
-          Color(0xFF003D5B),
-        ],
-      ).createShader(
-        Rect.fromLTWH(
-          0,
-          0,
-          size.width,
-          size.height,
-        ),
-      );
-
-    canvas.drawRect(
-      Rect.fromLTWH(
-        0,
-        0,
-        size.width,
-        size.height,
-      ),
-      paint,
-    );
-
-    // Decoración
-    final decorativePaint = Paint()
-      ..color = const Color(
-        0xFF8FB8FF,
-      ).withValues(
-        alpha: 0.16,
-      );
-
-    // Círculo derecho superior
-    canvas.drawCircle(
-      Offset(
-        size.width * 0.90,
-        size.height * 0.18,
-      ),
-      size.width * 0.28,
-      decorativePaint,
-    );
-
-    // Círculo izquierdo inferior
-    canvas.drawCircle(
-      Offset(
-        size.width * 0.05,
-        size.height * 0.82,
-      ),
-      size.width * 0.23,
-      decorativePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(
-    covariant CustomPainter oldDelegate,
-  ) {
-    return false;
   }
 }

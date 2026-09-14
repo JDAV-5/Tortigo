@@ -63,4 +63,6 @@ flutter:
     - assets/images/tortigo_splash.png
     - assets/images/fondo1.png
     - assets/images/fondo2.png
+    - assets/images/fondo3.png
+    - assets/images/torti_read.png
     - assets/audio/missions/plant_seed/Camino.mp3
