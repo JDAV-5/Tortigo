@@ -1,593 +1,906 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/services/player_progress_service.dart';
+
+import '../logros/logros_page.dart';
 import '../torti_chat/torti_chat_page.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  const HomePage({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final playerName =
-        ModalRoute.of(context)?.settings.arguments as String? ??
-            'Héroe';
+    final progressService =
+        PlayerProgressService.instance;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemStatusBarContrastEnforced: false,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(
-          0xFF236B3A,
-        ),
+    // ============================================================
+    // ESCUCHAR CAMBIOS DEL PERFIL
+    // ============================================================
+    //
+    // Cuando el usuario:
+    //
+    // - gana estrellas
+    // - completa una misión
+    // - compra una medalla
+    //
+    // el Home se actualizará automáticamente.
+    // ============================================================
 
-        // =====================================================
-        // BODY
-        // =====================================================
+    return AnimatedBuilder(
+      animation: progressService,
+      builder: (
+        context,
+        child,
+      ) {
+        final profile =
+            progressService.activeProfile;
 
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            // =================================================
-            // FONDO
-            // =================================================
+        // ========================================================
+        // NO HAY PERFIL ACTIVO
+        // ========================================================
 
-            Image.asset(
-              'assets/images/fondo3.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
+        if (profile == null) {
+          return _NoActiveProfilePage(
+            onReturnToLogin: () {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
+            },
+          );
+        }
+
+        // ========================================================
+        // ABRIR LOGROS
+        // ========================================================
+
+        void openAchievements() {
+          HapticFeedback.selectionClick();
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                // LogrosPage obtiene nombre, avatar y estrellas
+                // directamente desde PlayerProgressService.
+                return const LogrosPage();
+              },
+            ),
+          );
+        }
+
+        // ========================================================
+        // ABRIR CHAT DE TORTI
+        // ========================================================
+
+        void openTortiChat() {
+          HapticFeedback.selectionClick();
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return TortiChatPage(
+                  playerName: profile.name,
+                );
+              },
+            ),
+          );
+        }
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                Brightness.light,
+            statusBarBrightness:
+                Brightness.dark,
+            systemStatusBarContrastEnforced:
+                false,
+          ),
+          child: Scaffold(
+            backgroundColor:
+                const Color(
+              0xFF236B3A,
             ),
 
-            // =================================================
-            // CAPA SUAVE
-            // =================================================
+            // =====================================================
+            // BODY
+            // =====================================================
 
-            Container(
-              color: Colors.black.withValues(
-                alpha: 0.02,
-              ),
-            ),
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                // =================================================
+                // FONDO
+                // =================================================
 
-            // =================================================
-            // CONTENIDO
-            // =================================================
-
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
+                Image.asset(
+                  'assets/images/fondo3.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
                 ),
-                child: Column(
-                  children: [
-                    const SizedBox(
-                      height: 8,
+
+                // =================================================
+                // CAPA SUAVE
+                // =================================================
+
+                Container(
+                  color: Colors.black.withValues(
+                    alpha: 0.02,
+                  ),
+                ),
+
+                // =================================================
+                // CONTENIDO
+                // =================================================
+
+                SafeArea(
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(
+                      horizontal: 20,
                     ),
-
-                    // =================================================
-                    // CABECERA
-                    // =================================================
-
-                    Row(
+                    child: Column(
                       children: [
-                        // =============================================
-                        // AVATAR
-                        // =============================================
+                        const SizedBox(
+                          height: 8,
+                        ),
+
+                        // =========================================
+                        // CABECERA
+                        // =========================================
+
+                        Row(
+                          children: [
+                            // =====================================
+                            // AVATAR REAL DEL PERFIL
+                            // =====================================
+
+                            Container(
+                              width: 45,
+                              height: 45,
+                              decoration:
+                                  BoxDecoration(
+                                color: Colors.white,
+                                shape:
+                                    BoxShape.circle,
+                                border:
+                                    Border.all(
+                                  color:
+                                      const Color(
+                                    0xFF59B83A,
+                                  ),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                        const Color(
+                                      0xFF236B3A,
+                                    ).withValues(
+                                      alpha: 0.18,
+                                    ),
+                                    blurRadius: 8,
+                                    offset:
+                                        const Offset(
+                                      0,
+                                      3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              alignment:
+                                  Alignment.center,
+                              child: Text(
+                                profile.avatar,
+                                style:
+                                    const TextStyle(
+                                  fontSize: 25,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(
+                              width: 10,
+                            ),
+
+                            // =====================================
+                            // NOMBRE
+                            // =====================================
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment
+                                        .start,
+                                children: [
+                                  Text(
+                                    '¡Hola, ${profile.name}!',
+                                    style:
+                                        const TextStyle(
+                                      color:
+                                          Colors.white,
+                                      fontSize: 20,
+                                      fontWeight:
+                                          FontWeight
+                                              .w800,
+                                      shadows: [
+                                        Shadow(
+                                          color:
+                                              Colors.black38,
+                                          blurRadius:
+                                              5,
+                                          offset:
+                                              Offset(
+                                            0,
+                                            2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '¿Qué aprenderemos hoy?',
+                                    style: TextStyle(
+                                      color: Colors
+                                          .white
+                                          .withValues(
+                                        alpha: 0.90,
+                                      ),
+                                      fontSize: 12,
+                                      fontWeight:
+                                          FontWeight
+                                              .w500,
+                                      shadows:
+                                          const [
+                                        Shadow(
+                                          color:
+                                              Colors.black26,
+                                          blurRadius:
+                                              4,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // =====================================
+                            // ESTRELLAS REALES
+                            // =====================================
+
+                            Container(
+                              padding:
+                                  const EdgeInsets
+                                      .symmetric(
+                                horizontal: 11,
+                                vertical: 7,
+                              ),
+                              decoration:
+                                  BoxDecoration(
+                                color:
+                                    const Color(
+                                  0xFF236B3A,
+                                ).withValues(
+                                  alpha: 0.72,
+                                ),
+                                borderRadius:
+                                    BorderRadius
+                                        .circular(
+                                  18,
+                                ),
+                                border:
+                                    Border.all(
+                                  color: Colors
+                                      .white
+                                      .withValues(
+                                    alpha: 0.20,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons
+                                        .star_rounded,
+                                    color:
+                                        Color(
+                                      0xFFFFD23F,
+                                    ),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  Text(
+                                    '${profile.stars}',
+                                    style:
+                                        const TextStyle(
+                                      color:
+                                          Colors.white,
+                                      fontWeight:
+                                          FontWeight
+                                              .w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // =========================================
+                        // TORTI LEYENDO
+                        // =========================================
+
+                        const SizedBox(
+                          height: 2,
+                        ),
+
+                        Align(
+                          alignment:
+                              Alignment.centerRight,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.only(
+                              right: 1,
+                            ),
+                            child: Image.asset(
+                              'assets/images/torti_read.png',
+                              height: 170,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(
+                          height: 5,
+                        ),
+
+                        // =========================================
+                        // FILA 1
+                        // =========================================
+
+                        Row(
+                          children: [
+                            // =====================================
+                            // MISIONES
+                            // =====================================
+
+                            Expanded(
+                              child:
+                                  _HomeOptionCard(
+                                title:
+                                    'Misiones\necológicas',
+                                subtitle:
+                                    'Completa retos y ayuda al planeta',
+                                icon:
+                                    Icons.eco_rounded,
+                                iconColor:
+                                    const Color(
+                                  0xFF45A049,
+                                ),
+                                backgroundColor:
+                                    const Color(
+                                  0xFFE7F7D8,
+                                ),
+                                onTap: () {
+                                  HapticFeedback
+                                      .selectionClick();
+
+                                  Navigator
+                                      .pushNamed(
+                                    context,
+                                    '/missions',
+                                  );
+                                },
+                              ),
+                            ),
+
+                            const SizedBox(
+                              width: 12,
+                            ),
+
+                            // =====================================
+                            // JUEGOS
+                            // =====================================
+
+                            Expanded(
+                              child:
+                                  _HomeOptionCard(
+                                title:
+                                    'Juegos\neducativos',
+                                subtitle:
+                                    'Aprende jugando y diviértete',
+                                icon: Icons
+                                    .sports_esports_rounded,
+                                iconColor:
+                                    const Color(
+                                  0xFF318CB8,
+                                ),
+                                backgroundColor:
+                                    const Color(
+                                  0xFFE5F6FC,
+                                ),
+                                onTap: () {
+                                  HapticFeedback
+                                      .selectionClick();
+
+                                  debugPrint(
+                                    'Juegos',
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(
+                          height: 12,
+                        ),
+
+                        // =========================================
+                        // FILA 2
+                        // =========================================
+
+                        Row(
+                          children: [
+                            // =====================================
+                            // APRENDE
+                            // =====================================
+
+                            Expanded(
+                              child:
+                                  _HomeOptionCard(
+                                title: 'Aprende',
+                                subtitle:
+                                    'Explora, escucha y descubre',
+                                icon: Icons
+                                    .menu_book_rounded,
+                                iconColor:
+                                    const Color(
+                                  0xFF9C27D8,
+                                ),
+                                backgroundColor:
+                                    const Color(
+                                  0xFFF6E9FF,
+                                ),
+                                onTap: () {
+                                  HapticFeedback
+                                      .selectionClick();
+
+                                  debugPrint(
+                                    'Aprende',
+                                  );
+                                },
+                              ),
+                            ),
+
+                            const SizedBox(
+                              width: 12,
+                            ),
+
+                            // =====================================
+                            // LOGROS
+                            // =====================================
+
+                            Expanded(
+                              child:
+                                  _HomeOptionCard(
+                                title: 'Logros',
+                                subtitle:
+                                    'Gana recompensas y desbloquea medallas',
+                                icon: Icons
+                                    .emoji_events_rounded,
+                                iconColor:
+                                    const Color(
+                                  0xFFE8A700,
+                                ),
+                                backgroundColor:
+                                    const Color(
+                                  0xFFFFF5D8,
+                                ),
+                                onTap:
+                                    openAchievements,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const Spacer(),
+
+                        // =========================================
+                        // FRASE
+                        // =========================================
 
                         Container(
-                          width: 45,
-                          height: 45,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(
-                                0xFF59B83A,
+                          width:
+                              double.infinity,
+                          padding:
+                              const EdgeInsets
+                                  .symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          decoration:
+                              BoxDecoration(
+                            color: Colors.white
+                                .withValues(
+                              alpha: 0.94,
+                            ),
+                            borderRadius:
+                                BorderRadius
+                                    .circular(
+                              20,
+                            ),
+                            border:
+                                Border.all(
+                              color:
+                                  const Color(
+                                0xFF7BCB4D,
+                              ).withValues(
+                                alpha: 0.40,
                               ),
-                              width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(
+                                color:
+                                    const Color(
                                   0xFF236B3A,
                                 ).withValues(
-                                  alpha: 0.18,
+                                  alpha: 0.15,
                                 ),
-                                blurRadius: 8,
-                                offset: const Offset(
+                                blurRadius: 10,
+                                offset:
+                                    const Offset(
                                   0,
-                                  3,
+                                  4,
                                 ),
                               ),
                             ],
                           ),
-                          alignment: Alignment.center,
-                          child: const Text(
-                            '🐢',
-                            style: TextStyle(
-                              fontSize: 25,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(
-                          width: 10,
-                        ),
-
-                        // =============================================
-                        // SALUDO
-                        // =============================================
-
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '¡Hola, $playerName!',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight:
-                                      FontWeight.w800,
-                                  shadows: [
-                                    Shadow(
-                                      color:
-                                          Colors.black38,
-                                      blurRadius: 5,
-                                      offset: Offset(
-                                        0,
-                                        2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              Text(
-                                '¿Qué aprenderemos hoy?',
-                                style: TextStyle(
-                                  color: Colors.white
-                                      .withValues(
-                                    alpha: 0.90,
-                                  ),
-                                  fontSize: 12,
-                                  fontWeight:
-                                      FontWeight.w500,
-                                  shadows: const [
-                                    Shadow(
-                                      color:
-                                          Colors.black26,
-                                      blurRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // =============================================
-                        // ESTRELLAS
-                        // =============================================
-
-                        Container(
-                          padding:
-                              const EdgeInsets.symmetric(
-                            horizontal: 11,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF236B3A,
-                            ).withValues(
-                              alpha: 0.72,
-                            ),
-                            borderRadius:
-                                BorderRadius.circular(
-                              18,
-                            ),
-                            border: Border.all(
-                              color: Colors.white
-                                  .withValues(
-                                alpha: 0.20,
-                              ),
-                            ),
-                          ),
-                          child: const Row(
+                          child:
+                              const Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment
+                                    .center,
                             children: [
                               Icon(
-                                Icons.star_rounded,
-                                color: Color(
-                                  0xFFFFD23F,
+                                Icons
+                                    .eco_rounded,
+                                color:
+                                    Color(
+                                  0xFF59B83A,
                                 ),
-                                size: 20,
+                                size: 26,
                               ),
                               SizedBox(
-                                width: 5,
+                                width: 9,
                               ),
-                              Text(
-                                '0',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight:
-                                      FontWeight.w700,
+                              Flexible(
+                                child: Text(
+                                  'Pequeñas acciones hacen grandes cambios',
+                                  textAlign:
+                                      TextAlign
+                                          .center,
+                                  style:
+                                      TextStyle(
+                                    color:
+                                        Color(
+                                      0xFF59666D,
+                                    ),
+                                    fontSize: 13,
+                                    height: 1.15,
+                                    fontWeight:
+                                        FontWeight
+                                            .w500,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-
-                    // =================================================
-                    // TORTI LEYENDO
-                    // =================================================
-
-                    const SizedBox(
-                      height: 2,
-                    ),
-
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          right: 1,
-                        ),
-                        child: Image.asset(
-                          'assets/images/torti_read.png',
-                          height: 170,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 5,
-                    ),
-
-                    // =================================================
-                    // FILA 1
-                    // =================================================
-
-                    Row(
-                      children: [
-                        // =============================================
-                        // MISIONES
-                        // =============================================
-
-                        Expanded(
-                          child: _HomeOptionCard(
-                            title:
-                                'Misiones\necológicas',
-                            subtitle:
-                                'Completa retos y ayuda al planeta',
-                            icon: Icons.eco_rounded,
-                            iconColor: const Color(
-                              0xFF45A049,
-                            ),
-                            backgroundColor:
-                                const Color(
-                              0xFFE7F7D8,
-                            ),
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/missions',
-                              );
-                            },
-                          ),
-                        ),
 
                         const SizedBox(
-                          width: 12,
-                        ),
-
-                        // =============================================
-                        // JUEGOS
-                        // =============================================
-
-                        Expanded(
-                          child: _HomeOptionCard(
-                            title:
-                                'Juegos\neducativos',
-                            subtitle:
-                                'Aprende jugando y diviértete',
-                            icon: Icons
-                                .sports_esports_rounded,
-                            iconColor: const Color(
-                              0xFF318CB8,
-                            ),
-                            backgroundColor:
-                                const Color(
-                              0xFFE5F6FC,
-                            ),
-                            onTap: () {
-                              debugPrint(
-                                'Juegos',
-                              );
-                            },
-                          ),
+                          height: 14,
                         ),
                       ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // =====================================================
+            // BARRA INFERIOR
+            // =====================================================
+
+            bottomNavigationBar:
+                Container(
+              margin:
+                  const EdgeInsets.fromLTRB(
+                18,
+                0,
+                18,
+                10,
+              ),
+              decoration:
+                  BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                    BorderRadius.circular(
+                  20,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black
+                        .withValues(
+                      alpha: 0.16,
+                    ),
+                    blurRadius: 18,
+                    offset:
+                        const Offset(
+                      0,
+                      4,
+                    ),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: 66,
+                  child: Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment
+                            .spaceAround,
+                    children: [
+                      // ===========================================
+                      // INICIO
+                      // ===========================================
+
+                      const _BottomNavItem(
+                        icon:
+                            Icons.home_rounded,
+                        label: 'Inicio',
+                        selected: true,
+                      ),
+
+                      // ===========================================
+                      // JUEGOS
+                      // ===========================================
+
+                      _BottomNavItem(
+                        icon: Icons
+                            .sports_esports_rounded,
+                        label: 'Juegos',
+                        onTap: () {
+                          HapticFeedback
+                              .selectionClick();
+
+                          debugPrint(
+                            'Juegos',
+                          );
+                        },
+                      ),
+
+                      // ===========================================
+                      // APRENDE
+                      // ===========================================
+
+                      _BottomNavItem(
+                        icon: Icons
+                            .menu_book_rounded,
+                        label: 'Aprende',
+                        onTap: () {
+                          HapticFeedback
+                              .selectionClick();
+
+                          debugPrint(
+                            'Aprende',
+                          );
+                        },
+                      ),
+
+                      // ===========================================
+                      // LOGROS
+                      // ===========================================
+
+                      _BottomNavItem(
+                        icon: Icons
+                            .emoji_events_rounded,
+                        label: 'Logros',
+                        onTap:
+                            openAchievements,
+                      ),
+
+                      // ===========================================
+                      // TORTI
+                      // ===========================================
+
+                      _BottomNavItem(
+                        icon: Icons
+                            .chat_bubble_rounded,
+                        label: 'Torti',
+                        onTap:
+                            openTortiChat,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// =====================================================================
+// SIN PERFIL ACTIVO
+// =====================================================================
+
+class _NoActiveProfilePage
+    extends StatelessWidget {
+  final VoidCallback onReturnToLogin;
+
+  const _NoActiveProfilePage({
+    required this.onReturnToLogin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor:
+          const Color(
+        0xFF236B3A,
+      ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/images/fondo3.png',
+            fit: BoxFit.cover,
+          ),
+
+          Container(
+            color: Colors.black.withValues(
+              alpha: 0.10,
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: Container(
+                margin:
+                    const EdgeInsets.all(
+                  24,
+                ),
+                padding:
+                    const EdgeInsets.all(
+                  24,
+                ),
+                decoration:
+                    BoxDecoration(
+                  color: Colors.white,
+                  borderRadius:
+                      BorderRadius
+                          .circular(
+                    24,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize:
+                      MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '🐢',
+                      style: TextStyle(
+                        fontSize: 55,
+                      ),
                     ),
 
                     const SizedBox(
                       height: 12,
                     ),
 
-                    // =================================================
-                    // FILA 2
-                    // =================================================
-
-                    Row(
-                      children: [
-                        // =============================================
-                        // APRENDE
-                        // =============================================
-
-                        Expanded(
-                          child: _HomeOptionCard(
-                            title: 'Aprende',
-                            subtitle:
-                                'Explora, escucha y descubre',
-                            icon:
-                                Icons.menu_book_rounded,
-                            iconColor: const Color(
-                              0xFF9C27D8,
-                            ),
-                            backgroundColor:
-                                const Color(
-                              0xFFF6E9FF,
-                            ),
-                            onTap: () {
-                              debugPrint(
-                                'Aprende',
-                              );
-                            },
-                          ),
+                    const Text(
+                      'No hay un perfil activo',
+                      textAlign:
+                          TextAlign.center,
+                      style: TextStyle(
+                        color: Color(
+                          0xFF236B3A,
                         ),
-
-                        const SizedBox(
-                          width: 12,
-                        ),
-
-                        // =============================================
-                        // LOGROS
-                        // =============================================
-
-                        Expanded(
-                          child: _HomeOptionCard(
-                            title: 'Logros',
-                            subtitle:
-                                'Gana recompensas y desbloquea medallas',
-                            icon: Icons
-                                .emoji_events_rounded,
-                            iconColor: const Color(
-                              0xFFE8A700,
-                            ),
-                            backgroundColor:
-                                const Color(
-                              0xFFFFF5D8,
-                            ),
-                            onTap: () {
-                              debugPrint(
-                                'Logros',
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const Spacer(),
-
-                    // =================================================
-                    // FRASE
-                    // =================================================
-
-                    Container(
-                      width: double.infinity,
-                      padding:
-                          const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white
-                            .withValues(
-                          alpha: 0.94,
-                        ),
-                        borderRadius:
-                            BorderRadius.circular(
-                          20,
-                        ),
-                        border: Border.all(
-                          color: const Color(
-                            0xFF7BCB4D,
-                          ).withValues(
-                            alpha: 0.40,
-                          ),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFF236B3A,
-                            ).withValues(
-                              alpha: 0.15,
-                            ),
-                            blurRadius: 10,
-                            offset: const Offset(
-                              0,
-                              4,
-                            ),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.eco_rounded,
-                            color: Color(
-                              0xFF59B83A,
-                            ),
-                            size: 26,
-                          ),
-                          SizedBox(
-                            width: 9,
-                          ),
-                          Flexible(
-                            child: Text(
-                              'Pequeñas acciones hacen grandes cambios',
-                              textAlign:
-                                  TextAlign.center,
-                              style: TextStyle(
-                                color: Color(
-                                  0xFF59666D,
-                                ),
-                                fontSize: 13,
-                                height: 1.15,
-                                fontWeight:
-                                    FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+                        fontSize: 20,
+                        fontWeight:
+                            FontWeight
+                                .w800,
                       ),
                     ),
 
                     const SizedBox(
-                      height: 14,
+                      height: 8,
+                    ),
+
+                    const Text(
+                      'Selecciona tu perfil para continuar.',
+                      textAlign:
+                          TextAlign.center,
+                      style: TextStyle(
+                        color: Color(
+                          0xFF718089,
+                        ),
+                        fontSize: 13,
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 20,
+                    ),
+
+                    ElevatedButton(
+                      onPressed:
+                          onReturnToLogin,
+                      style:
+                          ElevatedButton
+                              .styleFrom(
+                        backgroundColor:
+                            const Color(
+                          0xFF45A049,
+                        ),
+                        foregroundColor:
+                            Colors.white,
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
+                          horizontal: 24,
+                          vertical: 13,
+                        ),
+                        shape:
+                            RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius
+                                  .circular(
+                            14,
+                          ),
+                        ),
+                      ),
+                      child:
+                          const Text(
+                        'Seleccionar perfil',
+                        style:
+                            TextStyle(
+                          fontWeight:
+                              FontWeight
+                                  .w700,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
-
-        // =====================================================
-        // BARRA DE NAVEGACIÓN
-        // =====================================================
-
-        bottomNavigationBar: Container(
-          margin: const EdgeInsets.fromLTRB(
-            18,
-            0,
-            18,
-            10,
           ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(
-              20,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: 0.16,
-                ),
-                blurRadius: 18,
-                offset: const Offset(
-                  0,
-                  4,
-                ),
-              ),
-            ],
-          ),
-
-          child: SafeArea(
-            top: false,
-            child: SizedBox(
-              height: 66,
-              child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceAround,
-                children: [
-                  // =============================================
-                  // INICIO
-                  // =============================================
-
-                  const _BottomNavItem(
-                    icon: Icons.home_rounded,
-                    label: 'Inicio',
-                    selected: true,
-                  ),
-
-                  // =============================================
-                  // JUEGOS
-                  // =============================================
-
-                  const _BottomNavItem(
-                    icon:
-                        Icons.sports_esports_rounded,
-                    label: 'Juegos',
-                  ),
-
-                  // =============================================
-                  // APRENDE
-                  // =============================================
-
-                  const _BottomNavItem(
-                    icon:
-                        Icons.menu_book_rounded,
-                    label: 'Aprende',
-                  ),
-
-                  // =============================================
-                  // LOGROS
-                  // =============================================
-
-                  const _BottomNavItem(
-                    icon:
-                        Icons.emoji_events_rounded,
-                    label: 'Logros',
-                  ),
-
-                  // =============================================
-                  // TORTI
-                  // =============================================
-
-                  _BottomNavItem(
-                    icon:
-                        Icons.chat_bubble_rounded,
-                    label: 'Torti',
-                    onTap: () {
-                      HapticFeedback
-                          .selectionClick();
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) {
-                            return TortiChatPage(
-                              playerName:
-                                  playerName,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
 }
 
-// =============================================================
+// =====================================================================
 // TARJETA DEL HOME
-// =============================================================
+// =====================================================================
 
-class _HomeOptionCard extends StatelessWidget {
+class _HomeOptionCard
+    extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
@@ -608,21 +921,26 @@ class _HomeOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(
+      borderRadius:
+          BorderRadius.circular(
         22,
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(
+        borderRadius:
+            BorderRadius.circular(
           22,
         ),
         child: Container(
           height: 112,
-          padding: const EdgeInsets.symmetric(
+          padding:
+              const EdgeInsets
+                  .symmetric(
             horizontal: 12,
             vertical: 10,
           ),
-          decoration: BoxDecoration(
+          decoration:
+              BoxDecoration(
             borderRadius:
                 BorderRadius.circular(
               22,
@@ -643,7 +961,8 @@ class _HomeOptionCard extends StatelessWidget {
                   alpha: 0.12,
                 ),
                 blurRadius: 12,
-                offset: const Offset(
+                offset:
+                    const Offset(
                   0,
                   5,
                 ),
@@ -652,16 +971,19 @@ class _HomeOptionCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // ===============================================
+              // =================================================
               // ICONO
-              // ===============================================
+              // =================================================
 
               Container(
                 width: 46,
                 height: 46,
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  shape: BoxShape.circle,
+                decoration:
+                    BoxDecoration(
+                  color:
+                      backgroundColor,
+                  shape:
+                      BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
@@ -674,27 +996,31 @@ class _HomeOptionCard extends StatelessWidget {
                 width: 9,
               ),
 
-              // ===============================================
+              // =================================================
               // TEXTOS
-              // ===============================================
+              // =================================================
 
               Expanded(
                 child: Column(
                   mainAxisAlignment:
-                      MainAxisAlignment.center,
+                      MainAxisAlignment
+                          .center,
                   crossAxisAlignment:
-                      CrossAxisAlignment.center,
+                      CrossAxisAlignment
+                          .center,
                   children: [
                     Text(
                       title,
                       textAlign:
                           TextAlign.center,
                       style: TextStyle(
-                        color: iconColor,
+                        color:
+                            iconColor,
                         fontSize: 14,
                         height: 1.05,
                         fontWeight:
-                            FontWeight.w800,
+                            FontWeight
+                                .w800,
                       ),
                     ),
 
@@ -706,17 +1032,20 @@ class _HomeOptionCard extends StatelessWidget {
                       subtitle,
                       maxLines: 2,
                       overflow:
-                          TextOverflow.ellipsis,
+                          TextOverflow
+                              .ellipsis,
                       textAlign:
                           TextAlign.center,
-                      style: const TextStyle(
+                      style:
+                          const TextStyle(
                         color: Color(
                           0xFF59666D,
                         ),
                         fontSize: 8.5,
                         height: 1.15,
                         fontWeight:
-                            FontWeight.w500,
+                            FontWeight
+                                .w500,
                       ),
                     ),
                   ],
@@ -730,16 +1059,15 @@ class _HomeOptionCard extends StatelessWidget {
   }
 }
 
-// =============================================================
-// ITEM BARRA INFERIOR
-// =============================================================
+// =====================================================================
+// ITEM DE LA BARRA INFERIOR
+// =====================================================================
 
-class _BottomNavItem extends StatelessWidget {
+class _BottomNavItem
+    extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
-
-  // Acción opcional.
   final VoidCallback? onTap;
 
   const _BottomNavItem({
@@ -761,29 +1089,25 @@ class _BottomNavItem extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-
       child: InkWell(
         onTap: onTap,
-
         borderRadius:
             BorderRadius.circular(
           14,
         ),
-
         child: Padding(
           padding:
-              const EdgeInsets.symmetric(
+              const EdgeInsets
+                  .symmetric(
             horizontal: 9,
             vertical: 7,
           ),
-
           child: Column(
             mainAxisSize:
                 MainAxisSize.min,
-
             mainAxisAlignment:
-                MainAxisAlignment.center,
-
+                MainAxisAlignment
+                    .center,
             children: [
               Icon(
                 icon,
@@ -797,14 +1121,15 @@ class _BottomNavItem extends StatelessWidget {
 
               Text(
                 label,
-
                 style: TextStyle(
                   color: color,
                   fontSize: 9,
-
-                  fontWeight: selected
-                      ? FontWeight.w700
-                      : FontWeight.w500,
+                  fontWeight:
+                      selected
+                          ? FontWeight
+                              .w700
+                          : FontWeight
+                              .w500,
                 ),
               ),
             ],

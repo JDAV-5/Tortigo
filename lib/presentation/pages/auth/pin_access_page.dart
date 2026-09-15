@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/services/player_progress_service.dart';
+
 class PinAccessPage extends StatefulWidget {
   final String playerName;
 
   // PIN temporal para validar el perfil.
-  // Más adelante lo guardaremos cuando se cree cada jugador.
+  // Más adelante podremos guardarlo junto al perfil.
   final String expectedPin;
 
   const PinAccessPage({
@@ -23,6 +25,9 @@ class _PinAccessPageState
     extends State<PinAccessPage> {
   static const int _pinLength = 4;
 
+  final PlayerProgressService _progressService =
+      PlayerProgressService.instance;
+
   String _pin = '';
 
   bool _hasError = false;
@@ -33,7 +38,9 @@ class _PinAccessPageState
   // ============================================================
 
   void _addDigit(String digit) {
-    if (_isChecking) return;
+    if (_isChecking) {
+      return;
+    }
 
     if (_pin.length >= _pinLength) {
       return;
@@ -52,7 +59,9 @@ class _PinAccessPageState
   // ============================================================
 
   void _removeDigit() {
-    if (_isChecking) return;
+    if (_isChecking) {
+      return;
+    }
 
     if (_pin.isEmpty) {
       return;
@@ -75,7 +84,9 @@ class _PinAccessPageState
   // ============================================================
 
   Future<void> _submitPin() async {
-    if (_isChecking) return;
+    if (_isChecking) {
+      return;
+    }
 
     if (_pin.length != _pinLength) {
       HapticFeedback.lightImpact();
@@ -100,7 +111,9 @@ class _PinAccessPageState
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     // ==========================================================
     // PIN CORRECTO
@@ -108,6 +121,66 @@ class _PinAccessPageState
 
     if (_pin == widget.expectedPin) {
       HapticFeedback.mediumImpact();
+
+      // ========================================================
+      // ACTIVAR PERFIL
+      // ========================================================
+      //
+      // Aquí ocurre algo MUY importante:
+      //
+      // Ana  -> perfil activo Ana 🐢
+      // Juan -> perfil activo Juan 🦫
+      // Sofía -> perfil activo Sofía 🐼
+      //
+      // Home, Misiones y Logros podrán consultar después
+      // exactamente este mismo perfil.
+      // ========================================================
+
+      final profileActivated =
+          await _progressService
+              .setActiveProfileByName(
+        widget.playerName,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      // ========================================================
+      // ERROR SI NO EXISTE EL PERFIL
+      // ========================================================
+
+      if (!profileActivated) {
+        setState(() {
+          _isChecking = false;
+        });
+
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                'No se pudo abrir el perfil de ${widget.playerName}.',
+              ),
+              duration: const Duration(
+                seconds: 2,
+              ),
+            ),
+          );
+
+        return;
+      }
+
+      // ========================================================
+      // ENTRAR AL HOME
+      // ========================================================
+      //
+      // Seguimos enviando playerName por compatibilidad
+      // temporal con el Home actual.
+      //
+      // En el siguiente paso el Home dejará de depender
+      // de este argumento y leerá directamente el perfil activo.
+      // ========================================================
 
       Navigator.pushNamedAndRemoveUntil(
         context,
@@ -136,7 +209,9 @@ class _PinAccessPageState
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _pin = '';
@@ -161,8 +236,7 @@ class _PinAccessPageState
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor:
-            Colors.transparent,
+        statusBarColor: Colors.transparent,
         statusBarIconBrightness:
             Brightness.light,
         statusBarBrightness:
@@ -170,12 +244,16 @@ class _PinAccessPageState
         systemStatusBarContrastEnforced:
             false,
       ),
+
       child: Scaffold(
         backgroundColor:
-            const Color(0xFF236B3A),
+            const Color(
+          0xFF236B3A,
+        ),
 
         body: Stack(
           fit: StackFit.expand,
+
           children: [
             // =================================================
             // FONDO
@@ -590,7 +668,8 @@ class _PinAccessPageState
                             SizedBox(
                               width: 265,
 
-                              child: GridView.builder(
+                              child:
+                                  GridView.builder(
                                 shrinkWrap:
                                     true,
 
@@ -623,6 +702,7 @@ class _PinAccessPageState
                                   return _PinNumberButton(
                                     label:
                                         number,
+
                                     onTap:
                                         () {
                                       _addDigit(
@@ -662,6 +742,7 @@ class _PinAccessPageState
                                   _PinNumberButton(
                                     label:
                                         '0',
+
                                     onTap:
                                         () {
                                       _addDigit(

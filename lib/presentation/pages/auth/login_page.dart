@@ -1,52 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../data/services/player_progress_service.dart';
+import '../../../domain/entities/player_profile.dart';
+
 import 'pin_access_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({
+    super.key,
+  });
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginPage> createState() =>
+      _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
   // ============================================================
-  // PERFILES
+  // SERVICIO CENTRAL DE PERFILES
+  // ============================================================
+
+  final PlayerProgressService _progressService =
+      PlayerProgressService.instance;
+
+  // ============================================================
+  // PIN TEMPORALES
+  // ============================================================
   //
-  // PIN temporales para desarrollo.
-  // Más adelante cada jugador tendrá su propio PIN.
+  // Los nombres y avatares YA NO están aquí.
+  //
+  // Ahora vienen de PlayerProgressService.
+  //
+  // Estos PIN son temporales mientras desarrollamos
+  // el sistema de perfiles.
   // ============================================================
 
-  final List<PlayerProfile> _profiles = const [
-    PlayerProfile(
-      name: 'Ana',
-      emoji: '🐢',
-      accentColor: Color(0xFF7BCB4D),
-      pin: '1234',
-    ),
-    PlayerProfile(
-      name: 'Juan',
-      emoji: '🦫',
-      accentColor: Color(0xFF59B83A),
-      pin: '2580',
-    ),
-    PlayerProfile(
-      name: 'Sofía',
-      emoji: '🐼',
-      accentColor: Color(0xFF9BD56B),
-      pin: '4321',
-    ),
-  ];
+  static const Map<String, String> _profilePins = {
+    'ana': '1234',
+    'juan': '2580',
+    'sofia': '4321',
+  };
 
   // ============================================================
-  // ABRIR PANTALLA PIN
+  // ABRIR PANTALLA DEL PIN
   // ============================================================
 
-  void _openPinForProfile(int index) {
+  void _openPinForProfile(
+    PlayerProfile player,
+  ) {
     HapticFeedback.selectionClick();
 
-    final player = _profiles[index];
+    final pin =
+        _profilePins[player.id];
+
+    if (pin == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'No se encontró el PIN para ${player.name}.',
+            ),
+          ),
+        );
+
+      return;
+    }
 
     Navigator.push(
       context,
@@ -54,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context) {
           return PinAccessPage(
             playerName: player.name,
-            expectedPin: player.pin,
+            expectedPin: pin,
           );
         },
       ),
@@ -83,11 +103,48 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // ============================================================
+  // COLOR DEL PERFIL
+  // ============================================================
+
+  Color _getProfileColor(
+    String profileId,
+  ) {
+    switch (profileId) {
+      case 'ana':
+        return const Color(
+          0xFF7BCB4D,
+        );
+
+      case 'juan':
+        return const Color(
+          0xFF59B83A,
+        );
+
+      case 'sofia':
+        return const Color(
+          0xFF9BD56B,
+        );
+
+      default:
+        return const Color(
+          0xFF7BCB4D,
+        );
+    }
+  }
+
+  // ============================================================
   // BUILD
   // ============================================================
 
   @override
   Widget build(BuildContext context) {
+    // ==========================================================
+    // PERFILES DESDE EL SISTEMA CENTRAL
+    // ==========================================================
+
+    final profiles =
+        _progressService.profiles;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -98,12 +155,16 @@ class _LoginPageState extends State<LoginPage> {
         systemStatusBarContrastEnforced:
             false,
       ),
+
       child: Scaffold(
         backgroundColor:
-            const Color(0xFF236B3A),
+            const Color(
+          0xFF236B3A,
+        ),
 
         body: Stack(
           fit: StackFit.expand,
+
           children: [
             // =================================================
             // FONDO
@@ -179,7 +240,10 @@ class _LoginPageState extends State<LoginPage> {
                                   Colors.black45,
                               blurRadius: 6,
                               offset:
-                                  Offset(0, 2),
+                                  Offset(
+                                0,
+                                2,
+                              ),
                             ),
                           ],
                         ),
@@ -207,7 +271,10 @@ class _LoginPageState extends State<LoginPage> {
                                   Colors.black38,
                               blurRadius: 4,
                               offset:
-                                  Offset(0, 1),
+                                  Offset(
+                                0,
+                                1,
+                              ),
                             ),
                           ],
                         ),
@@ -224,8 +291,13 @@ class _LoginPageState extends State<LoginPage> {
                       Row(
                         children:
                             List.generate(
-                          _profiles.length,
-                          (index) {
+                          profiles.length,
+                          (
+                            index,
+                          ) {
+                            final profile =
+                                profiles[index];
+
                             return Expanded(
                               child: Padding(
                                 padding:
@@ -236,7 +308,7 @@ class _LoginPageState extends State<LoginPage> {
                                           : 5,
                                   right:
                                       index ==
-                                              _profiles
+                                              profiles
                                                       .length -
                                                   1
                                           ? 0
@@ -246,12 +318,16 @@ class _LoginPageState extends State<LoginPage> {
                                 child:
                                     _ProfileCard(
                                   profile:
-                                      _profiles[
-                                          index],
+                                      profile,
+
+                                  accentColor:
+                                      _getProfileColor(
+                                    profile.id,
+                                  ),
 
                                   onTap: () {
                                     _openPinForProfile(
-                                      index,
+                                      profile,
                                     );
                                   },
                                 ),
@@ -262,7 +338,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
 
                       // =========================================
-                      // ESPACIO ENTRE PERFILES Y NUEVO JUGADOR
+                      // ESPACIO
                       // =========================================
 
                       const SizedBox(
@@ -274,7 +350,8 @@ class _LoginPageState extends State<LoginPage> {
                       // =========================================
 
                       GestureDetector(
-                        onTap: _createPlayer,
+                        onTap:
+                            _createPlayer,
 
                         child: Container(
                           width:
@@ -289,7 +366,8 @@ class _LoginPageState extends State<LoginPage> {
 
                           decoration:
                               BoxDecoration(
-                            color: Colors.white,
+                            color:
+                                Colors.white,
 
                             borderRadius:
                                 BorderRadius
@@ -312,9 +390,11 @@ class _LoginPageState extends State<LoginPage> {
                                     const Color(
                                   0xFF236B3A,
                                 ).withValues(
-                                  alpha: 0.22,
+                                  alpha:
+                                      0.22,
                                 ),
-                                blurRadius: 16,
+                                blurRadius:
+                                    16,
                                 offset:
                                     const Offset(
                                   0,
@@ -326,9 +406,9 @@ class _LoginPageState extends State<LoginPage> {
 
                           child: Row(
                             children: [
-                              // =====================================
-                              // BOTÓN +
-                              // =====================================
+                              // =================================
+                              // +
+                              // =================================
 
                               Container(
                                 width: 58,
@@ -360,7 +440,8 @@ class _LoginPageState extends State<LoginPage> {
 
                                 child:
                                     const Icon(
-                                  Icons.add_rounded,
+                                  Icons
+                                      .add_rounded,
                                   size: 38,
                                   color:
                                       Colors.white,
@@ -371,15 +452,16 @@ class _LoginPageState extends State<LoginPage> {
                                 width: 16,
                               ),
 
-                              // =====================================
+                              // =================================
                               // TEXTO
-                              // =====================================
+                              // =================================
 
                               const Expanded(
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment
                                           .start,
+
                                   children: [
                                     Text(
                                       'Nuevo jugador',
@@ -419,9 +501,9 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
 
-                              // =====================================
+                              // =================================
                               // HOJA
-                              // =====================================
+                              // =================================
 
                               Container(
                                 width: 50,
@@ -436,13 +518,15 @@ class _LoginPageState extends State<LoginPage> {
                                       const Color(
                                     0xFF59B83A,
                                   ).withValues(
-                                    alpha: 0.13,
+                                    alpha:
+                                        0.13,
                                   ),
                                 ),
 
                                 child:
                                     const Icon(
-                                  Icons.eco_rounded,
+                                  Icons
+                                      .eco_rounded,
                                   color:
                                       Color(
                                     0xFF45A049,
@@ -454,10 +538,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ),
-
-                      // =========================================
-                      // ESPACIO INFERIOR
-                      // =========================================
 
                       const SizedBox(
                         height: 55,
@@ -475,182 +555,215 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 // =====================================================================
-// MODELO DEL PERFIL
-// =====================================================================
-
-class PlayerProfile {
-  final String name;
-  final String emoji;
-  final Color accentColor;
-  final String pin;
-
-  const PlayerProfile({
-    required this.name,
-    required this.emoji,
-    required this.accentColor,
-    required this.pin,
-  });
-}
-
-// =====================================================================
 // TARJETA DE PERFIL
 // =====================================================================
 
 class _ProfileCard extends StatelessWidget {
   final PlayerProfile profile;
+
+  final Color accentColor;
+
   final VoidCallback onTap;
 
   const _ProfileCard({
     required this.profile,
+    required this.accentColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
+    return Material(
+      color: Colors.white,
 
-      child: Container(
-        height: 152,
+      borderRadius:
+          BorderRadius.circular(
+        18,
+      ),
 
-        padding:
-            const EdgeInsets.fromLTRB(
-          8,
-          10,
-          8,
-          8,
+      child: InkWell(
+        onTap: onTap,
+
+        borderRadius:
+            BorderRadius.circular(
+          18,
         ),
 
-        decoration: BoxDecoration(
-          color: Colors.white,
+        child: Container(
+          height: 152,
 
-          borderRadius:
-              BorderRadius.circular(
-            18,
+          padding:
+              const EdgeInsets.fromLTRB(
+            8,
+            10,
+            8,
+            8,
           ),
 
-          border: Border.all(
-            color:
-                profile.accentColor,
-            width: 2.5,
-          ),
-
-          boxShadow: [
-            BoxShadow(
-              color:
-                  const Color(
-                0xFF236B3A,
-              ).withValues(
-                alpha: 0.14,
-              ),
-              blurRadius: 10,
-              offset:
-                  const Offset(
-                0,
-                5,
-              ),
+          decoration:
+              BoxDecoration(
+            borderRadius:
+                BorderRadius.circular(
+              18,
             ),
-          ],
-        ),
 
-        child: Column(
-          children: [
-            // =================================================
-            // AVATAR
-            // =================================================
+            border:
+                Border.all(
+              color:
+                  accentColor,
+              width: 2.5,
+            ),
 
-            Container(
-              width: 72,
-              height: 72,
+            boxShadow: [
+              BoxShadow(
+                color:
+                    const Color(
+                  0xFF236B3A,
+                ).withValues(
+                  alpha:
+                      0.14,
+                ),
+                blurRadius:
+                    10,
+                offset:
+                    const Offset(
+                  0,
+                  5,
+                ),
+              ),
+            ],
+          ),
 
-              decoration:
-                  BoxDecoration(
-                shape:
-                    BoxShape.circle,
+          child: Column(
+            children: [
+              // =================================================
+              // AVATAR
+              // =================================================
 
-                gradient:
-                    const LinearGradient(
-                  begin:
-                      Alignment.topLeft,
-                  end:
-                      Alignment.bottomRight,
+              Container(
+                width: 72,
+                height: 72,
 
-                  colors: [
-                    Color(
-                      0xFFE7F7D8,
+                decoration:
+                    BoxDecoration(
+                  shape:
+                      BoxShape.circle,
+
+                  gradient:
+                      const LinearGradient(
+                    begin:
+                        Alignment.topLeft,
+                    end:
+                        Alignment.bottomRight,
+                    colors: [
+                      Color(
+                        0xFFE7F7D8,
+                      ),
+                      Color(
+                        0xFFA8DF7A,
+                      ),
+                    ],
+                  ),
+
+                  border:
+                      Border.all(
+                    color:
+                        accentColor
+                            .withValues(
+                      alpha:
+                          0.50,
                     ),
-                    Color(
-                      0xFFA8DF7A,
+                    width:
+                        1.5,
+                  ),
+                ),
+
+                alignment:
+                    Alignment.center,
+
+                child: Text(
+                  profile.avatar,
+
+                  style:
+                      const TextStyle(
+                    fontSize: 40,
+                  ),
+                ),
+              ),
+
+              const SizedBox(
+                height: 8,
+              ),
+
+              // =================================================
+              // NOMBRE
+              // =================================================
+
+              Text(
+                profile.name,
+
+                style:
+                    const TextStyle(
+                  color:
+                      Color(
+                    0xFF236B3A,
+                  ),
+                  fontSize:
+                      15,
+                  fontWeight:
+                      FontWeight.w800,
+                ),
+              ),
+
+              const Spacer(),
+
+              // =================================================
+              // ESTRELLA
+              // =================================================
+
+              Align(
+                alignment:
+                    Alignment.bottomRight,
+
+                child: Row(
+                  mainAxisSize:
+                      MainAxisSize.min,
+
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      color:
+                          Color(
+                        0xFFFFD23F,
+                      ),
+                      size:
+                          20,
+                    ),
+
+                    const SizedBox(
+                      width: 2,
+                    ),
+
+                    Text(
+                      '${profile.stars}',
+
+                      style:
+                          const TextStyle(
+                        color:
+                            Color(
+                          0xFF59666D,
+                        ),
+                        fontSize:
+                            10,
+                        fontWeight:
+                            FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
-
-                border: Border.all(
-                  color:
-                      const Color(
-                    0xFF7BCB4D,
-                  ).withValues(
-                    alpha: 0.35,
-                  ),
-                  width: 1.5,
-                ),
               ),
-
-              alignment:
-                  Alignment.center,
-
-              child: Text(
-                profile.emoji,
-                style:
-                    const TextStyle(
-                  fontSize: 40,
-                ),
-              ),
-            ),
-
-            const SizedBox(
-              height: 8,
-            ),
-
-            // =================================================
-            // NOMBRE
-            // =================================================
-
-            Text(
-              profile.name,
-
-              style:
-                  const TextStyle(
-                color:
-                    Color(
-                  0xFF236B3A,
-                ),
-                fontSize: 15,
-                fontWeight:
-                    FontWeight.w800,
-              ),
-            ),
-
-            const Spacer(),
-
-            // =================================================
-            // ESTRELLA
-            // =================================================
-
-            const Align(
-              alignment:
-                  Alignment.bottomRight,
-
-              child: Icon(
-                Icons.star_rounded,
-                color:
-                    Color(
-                  0xFFFFD23F,
-                ),
-                size: 22,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

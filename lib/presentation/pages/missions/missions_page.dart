@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 
+import '../../../data/services/player_progress_service.dart';
+
 class MissionsPage extends StatefulWidget {
   const MissionsPage({super.key});
 
@@ -23,6 +25,9 @@ class _MissionsPageState extends State<MissionsPage> {
   // PROGRESO DE MISIONES
   // =============================================================
 
+  final PlayerProgressService _progressService =
+      PlayerProgressService.instance;
+
   bool _plantSeedCompleted = false;
 
   bool _waterMissionUnlocked = false;
@@ -40,6 +45,13 @@ class _MissionsPageState extends State<MissionsPage> {
   @override
   void initState() {
     super.initState();
+
+    // Cargamos el progreso real del perfil activo.
+    _plantSeedCompleted =
+        _progressService.isMissionCompleted('plant_seed');
+
+    _waterMissionUnlocked =
+        _progressService.isMissionUnlocked('mission_2');
 
     _startMusic();
   }
@@ -575,22 +587,79 @@ class _MissionsPageState extends State<MissionsPage> {
 
   Future<void>
       _completePlantSeedMission() async {
-    // Si ya fue completada anteriormente,
-    // no repetimos la secuencia.
-    if (_plantSeedCompleted) {
+    // ===========================================================
+    // PASO 1
+    // GUARDAR LA MISIÓN EN EL PROGRESO CENTRAL
+    // ===========================================================
+    //
+    // completeMission() entrega las 20 estrellas solamente
+    // la primera vez. Si el jugador repite la misión, devuelve
+    // false y NO vuelve a sumar estrellas.
+    // ===========================================================
+
+    final rewardGranted =
+        await _progressService.completeMission(
+      'plant_seed',
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    // Sincronizamos la interfaz con el progreso guardado.
+    setState(() {
+      _plantSeedCompleted =
+          _progressService.isMissionCompleted(
+        'plant_seed',
+      );
+
+      _waterMissionUnlocked =
+          _progressService.isMissionUnlocked(
+        'mission_2',
+      );
+    });
+
+    // Si la misión ya estaba completada, no repetimos
+    // ni las estrellas ni la animación de desbloqueo.
+    if (!rewardGranted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Esta misión ya estaba completada. No se agregaron estrellas nuevas.',
+            ),
+            duration: Duration(
+              milliseconds: 1800,
+            ),
+          ),
+        );
+
       return;
     }
 
     // ===========================================================
-    // PASO 1
-    // MARCAR MISIÓN 1 COMO COMPLETADA
+    // PASO 2
+    // CONFIRMAR RECOMPENSA
     // ===========================================================
 
-    setState(() {
-      _plantSeedCompleted = true;
-    });
-
     HapticFeedback.mediumImpact();
+
+    final profile =
+        _progressService.activeProfile;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            '+20 ⭐ para ${profile?.name ?? 'tu perfil'}',
+          ),
+          duration: const Duration(
+            milliseconds: 1700,
+          ),
+        ),
+      );
 
     // Dejamos visible el check verde.
     await Future.delayed(
@@ -604,22 +673,20 @@ class _MissionsPageState extends State<MissionsPage> {
     }
 
     // ===========================================================
-    // PASO 2
-    // DESBLOQUEAMOS AHORRA AGUA
+    // PASO 3
+    // MOSTRAR DESBLOQUEO DE AHORRA AGUA
     // ===========================================================
 
     setState(() {
       _waterMissionUnlocked = true;
-
       _unlockingMission2 = true;
-
       _showUnlockBanner = true;
     });
 
     HapticFeedback.heavyImpact();
 
     // ===========================================================
-    // PASO 3
+    // PASO 4
     // DEJAMOS CORRER LA ANIMACIÓN
     // ===========================================================
 
@@ -638,7 +705,7 @@ class _MissionsPageState extends State<MissionsPage> {
     });
 
     // ===========================================================
-    // PASO 4
+    // PASO 5
     // EL MENSAJE QUEDA UN POCO MÁS
     // ===========================================================
 
