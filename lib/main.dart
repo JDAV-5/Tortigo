@@ -5,6 +5,7 @@ import 'data/services/player_progress_service.dart';
 
 import 'presentation/pages/onboarding/onboarding_page.dart';
 import 'presentation/pages/auth/login_page.dart';
+import 'presentation/pages/auth/create_user_page.dart';
 import 'presentation/pages/home/home_page.dart';
 import 'presentation/pages/missions/missions_page.dart';
 import 'presentation/pages/missions/plant_seed_page.dart';
@@ -14,24 +15,28 @@ import 'presentation/pages/missions/plant_seed_page.dart';
 // =====================================================================
 
 Future<void> main() async {
-  // Necesario porque usamos código async antes de runApp.
+  // Necesario porque ejecutamos código async antes de runApp.
   WidgetsFlutterBinding.ensureInitialized();
 
   // ===================================================================
-  // INICIALIZAR PERFILES Y PROGRESO
+  // INICIALIZAR PROGRESO LOCAL
   // ===================================================================
   //
-  // Aquí se cargan desde el teléfono:
+  // IMPORTANTE:
   //
-  // - Perfil activo
-  // - Estrellas
-  // - Misiones completadas
-  // - Medallas compradas
+  // Este servicio se mantiene temporalmente porque actualmente
+  // Home, Misiones y Logros todavía utilizan PlayerProgressService.
   //
-  // Ana  🐢
-  // Juan 🦫
-  // Sofía 🐼
+  // El registro y login de usuarios se están migrando al backend:
   //
+  // Flutter
+  //   ↓
+  // ASP.NET Core
+  //   ↓
+  // SQL Server
+  //
+  // Cuando migremos también el progreso al backend, esta inicialización
+  // podrá eliminarse.
   // ===================================================================
 
   await PlayerProgressService.instance.initialize();
@@ -84,13 +89,11 @@ class MyApp extends StatelessWidget {
 
       theme: ThemeData(
         useMaterial3: true,
-
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(
             0xFF45A049,
           ),
         ),
-
         scaffoldBackgroundColor: const Color(
           0xFFF4F8F1,
         ),
@@ -107,14 +110,33 @@ class MyApp extends StatelessWidget {
       // ===============================================================
 
       routes: {
+        // -------------------------------------------------------------
+        // ONBOARDING
+        // -------------------------------------------------------------
+
         '/': (context) =>
             const OnboardingPage(),
+
+        // -------------------------------------------------------------
+        // AUTENTICACIÓN
+        // -------------------------------------------------------------
 
         '/login': (context) =>
             const LoginPage(),
 
+        '/register': (context) =>
+            const CreateUserPage(),
+
+        // -------------------------------------------------------------
+        // HOME
+        // -------------------------------------------------------------
+
         '/home': (context) =>
             const HomePage(),
+
+        // -------------------------------------------------------------
+        // MISIONES
+        // -------------------------------------------------------------
 
         '/missions': (context) =>
             const MissionsPage(),

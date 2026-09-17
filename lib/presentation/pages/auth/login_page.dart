@@ -28,12 +28,21 @@ class _LoginPageState extends State<LoginPage> {
   // PIN TEMPORALES
   // ============================================================
   //
-  // Los nombres y avatares YA NO están aquí.
+  // Estos PIN siguen siendo temporales mientras migramos
+  // completamente el login hacia el backend.
   //
-  // Ahora vienen de PlayerProgressService.
+  // Más adelante:
   //
-  // Estos PIN son temporales mientras desarrollamos
-  // el sistema de perfiles.
+  // Flutter
+  //   ↓
+  // Nombre + PIN
+  //   ↓
+  // ASP.NET Core
+  //   ↓
+  // BCrypt
+  //   ↓
+  // SQL Server
+  //
   // ============================================================
 
   static const Map<String, String> _profilePins = {
@@ -82,24 +91,36 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // ============================================================
-  // CREAR JUGADOR
+  // CREAR NUEVO JUGADOR
+  // ============================================================
+  //
+  // Abre la pantalla:
+  //
+  // CreateUserPage
+  //
+  // mediante la ruta:
+  //
+  // /register
+  //
+  // Esta ruta debe estar registrada en main.dart.
   // ============================================================
 
-  void _createPlayer() {
+  Future<void> _createPlayer() async {
     HapticFeedback.lightImpact();
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Próximamente: crear nuevo jugador',
-          ),
-          duration: Duration(
-            milliseconds: 1500,
-          ),
-        ),
-      );
+    await Navigator.pushNamed(
+      context,
+      '/register',
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    // Más adelante, cuando los perfiles sean obtenidos
+    // directamente desde el backend, aquí podremos
+    // actualizar la lista después de crear un usuario.
+    setState(() {});
   }
 
   // ============================================================
@@ -407,7 +428,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Row(
                             children: [
                               // =================================
-                              // +
+                              // BOTÓN +
                               // =================================
 
                               Container(
@@ -702,6 +723,11 @@ class _ProfileCard extends StatelessWidget {
               Text(
                 profile.name,
 
+                maxLines: 1,
+
+                overflow:
+                    TextOverflow.ellipsis,
+
                 style:
                     const TextStyle(
                   color:
@@ -718,7 +744,7 @@ class _ProfileCard extends StatelessWidget {
               const Spacer(),
 
               // =================================================
-              // ESTRELLA
+              // ESTRELLAS
               // =================================================
 
               Align(
