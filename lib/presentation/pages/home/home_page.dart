@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../data/services/player_progress_service.dart';
+import '../../../data/services/current_user_service.dart';
 
 import '../logros/logros_page.dart';
 import '../torti_chat/torti_chat_page.dart';
@@ -13,46 +13,79 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progressService =
-        PlayerProgressService.instance;
+    // ============================================================
+    // USUARIO AUTENTICADO
+    //
+    // Este servicio contiene el usuario devuelto por:
+    //
+    // POST /api/Users/login
+    //
+    // PinAccessPage ejecuta:
+    //
+    // CurrentUserService.instance.setCurrentUser(user);
+    //
+    // Por lo tanto Home ya NO depende de PlayerProgressService
+    // para saber quién inició sesión.
+    // ============================================================
+
+    final CurrentUserService currentUserService =
+        CurrentUserService.instance;
 
     // ============================================================
-    // ESCUCHAR CAMBIOS DEL PERFIL
-    // ============================================================
+    // ESCUCHAR CAMBIOS DEL USUARIO
     //
-    // Cuando el usuario:
+    // Si cambia:
     //
-    // - gana estrellas
-    // - completa una misión
-    // - compra una medalla
+    // - nombre
+    // - avatar
+    // - estrellas
     //
-    // el Home se actualizará automáticamente.
+    // el Home se reconstruye automáticamente.
     // ============================================================
 
     return AnimatedBuilder(
-      animation: progressService,
+      animation:
+          currentUserService,
       builder: (
-        context,
-        child,
+        BuildContext context,
+        Widget? child,
       ) {
-        final profile =
-            progressService.activeProfile;
-
         // ========================================================
-        // NO HAY PERFIL ACTIVO
+        // VALIDAR SESIÓN
         // ========================================================
 
-        if (profile == null) {
+        if (!currentUserService.hasUser) {
           return _NoActiveProfilePage(
-            onReturnToLogin: () {
+            onReturnToLogin:
+                () {
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/login',
-                (route) => false,
+                (
+                  Route<dynamic> route,
+                ) =>
+                    false,
               );
             },
           );
         }
+
+        // ========================================================
+        // DATOS DEL USUARIO AUTENTICADO
+        // ========================================================
+
+        final String playerName =
+            currentUserService.displayName.isNotEmpty
+                ? currentUserService.displayName
+                : 'Jugador';
+
+        final String avatar =
+            currentUserService.avatarValue.isNotEmpty
+                ? currentUserService.avatarValue
+                : '🐢';
+
+        final int stars =
+            currentUserService.stars;
 
         // ========================================================
         // ABRIR LOGROS
@@ -64,9 +97,9 @@ class HomePage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) {
-                // LogrosPage obtiene nombre, avatar y estrellas
-                // directamente desde PlayerProgressService.
+              builder: (
+                BuildContext context,
+              ) {
                 return const LogrosPage();
               },
             ),
@@ -83,18 +116,24 @@ class HomePage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) {
+              builder: (
+                BuildContext context,
+              ) {
                 return TortiChatPage(
-                  playerName: profile.name,
+                  playerName:
+                      playerName,
                 );
               },
             ),
           );
         }
 
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: const SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
+        return AnnotatedRegion<
+            SystemUiOverlayStyle>(
+          value:
+              const SystemUiOverlayStyle(
+            statusBarColor:
+                Colors.transparent,
             statusBarIconBrightness:
                 Brightness.light,
             statusBarBrightness:
@@ -102,7 +141,8 @@ class HomePage extends StatelessWidget {
             systemStatusBarContrastEnforced:
                 false,
           ),
-          child: Scaffold(
+          child:
+              Scaffold(
             backgroundColor:
                 const Color(
               0xFF236B3A,
@@ -112,8 +152,10 @@ class HomePage extends StatelessWidget {
             // BODY
             // =====================================================
 
-            body: Stack(
-              fit: StackFit.expand,
+            body:
+                Stack(
+              fit:
+                  StackFit.expand,
               children: [
                 // =================================================
                 // FONDO
@@ -121,8 +163,10 @@ class HomePage extends StatelessWidget {
 
                 Image.asset(
                   'assets/images/fondo3.png',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
+                  fit:
+                      BoxFit.cover,
+                  alignment:
+                      Alignment.center,
                 ),
 
                 // =================================================
@@ -130,8 +174,10 @@ class HomePage extends StatelessWidget {
                 // =================================================
 
                 Container(
-                  color: Colors.black.withValues(
-                    alpha: 0.02,
+                  color:
+                      Colors.black.withValues(
+                    alpha:
+                        0.02,
                   ),
                 ),
 
@@ -140,15 +186,19 @@ class HomePage extends StatelessWidget {
                 // =================================================
 
                 SafeArea(
-                  child: Padding(
+                  child:
+                      Padding(
                     padding:
                         const EdgeInsets.symmetric(
-                      horizontal: 20,
+                      horizontal:
+                          20,
                     ),
-                    child: Column(
+                    child:
+                        Column(
                       children: [
                         const SizedBox(
-                          height: 8,
+                          height:
+                              8,
                         ),
 
                         // =========================================
@@ -158,15 +208,18 @@ class HomePage extends StatelessWidget {
                         Row(
                           children: [
                             // =====================================
-                            // AVATAR REAL DEL PERFIL
+                            // AVATAR DEL USUARIO AUTENTICADO
                             // =====================================
 
                             Container(
-                              width: 45,
-                              height: 45,
+                              width:
+                                  45,
+                              height:
+                                  45,
                               decoration:
                                   BoxDecoration(
-                                color: Colors.white,
+                                color:
+                                    Colors.white,
                                 shape:
                                     BoxShape.circle,
                                 border:
@@ -175,7 +228,8 @@ class HomePage extends StatelessWidget {
                                       const Color(
                                     0xFF59B83A,
                                   ),
-                                  width: 2,
+                                  width:
+                                      2,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -183,9 +237,11 @@ class HomePage extends StatelessWidget {
                                         const Color(
                                       0xFF236B3A,
                                     ).withValues(
-                                      alpha: 0.18,
+                                      alpha:
+                                          0.18,
                                     ),
-                                    blurRadius: 8,
+                                    blurRadius:
+                                        8,
                                     offset:
                                         const Offset(
                                       0,
@@ -196,39 +252,59 @@ class HomePage extends StatelessWidget {
                               ),
                               alignment:
                                   Alignment.center,
-                              child: Text(
-                                profile.avatar,
+
+                              // ===================================
+                              // AVATAR DEL BACKEND
+                              //
+                              // avatarValue:
+                              //
+                              // 🐢
+                              // 🐼
+                              // 🦫
+                              // 🐸
+                              // etc.
+                              // ===================================
+
+                              child:
+                                  Text(
+                                avatar,
                                 style:
                                     const TextStyle(
-                                  fontSize: 25,
+                                  fontSize:
+                                      25,
                                 ),
                               ),
                             ),
 
                             const SizedBox(
-                              width: 10,
+                              width:
+                                  10,
                             ),
 
                             // =====================================
-                            // NOMBRE
+                            // NOMBRE DEL USUARIO
                             // =====================================
 
                             Expanded(
-                              child: Column(
+                              child:
+                                  Column(
                                 crossAxisAlignment:
-                                    CrossAxisAlignment
-                                        .start,
+                                    CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '¡Hola, ${profile.name}!',
+                                    '¡Hola, $playerName!',
+                                    maxLines:
+                                        1,
+                                    overflow:
+                                        TextOverflow.ellipsis,
                                     style:
                                         const TextStyle(
                                       color:
                                           Colors.white,
-                                      fontSize: 20,
+                                      fontSize:
+                                          20,
                                       fontWeight:
-                                          FontWeight
-                                              .w800,
+                                          FontWeight.w800,
                                       shadows: [
                                         Shadow(
                                           color:
@@ -244,18 +320,20 @@ class HomePage extends StatelessWidget {
                                       ],
                                     ),
                                   ),
+
                                   Text(
                                     '¿Qué aprenderemos hoy?',
-                                    style: TextStyle(
-                                      color: Colors
-                                          .white
-                                          .withValues(
-                                        alpha: 0.90,
+                                    style:
+                                        TextStyle(
+                                      color:
+                                          Colors.white.withValues(
+                                        alpha:
+                                            0.90,
                                       ),
-                                      fontSize: 12,
+                                      fontSize:
+                                          12,
                                       fontWeight:
-                                          FontWeight
-                                              .w500,
+                                          FontWeight.w500,
                                       shadows:
                                           const [
                                         Shadow(
@@ -272,15 +350,16 @@ class HomePage extends StatelessWidget {
                             ),
 
                             // =====================================
-                            // ESTRELLAS REALES
+                            // ESTRELLAS DEL USUARIO
                             // =====================================
 
                             Container(
                               padding:
-                                  const EdgeInsets
-                                      .symmetric(
-                                horizontal: 11,
-                                vertical: 7,
+                                  const EdgeInsets.symmetric(
+                                horizontal:
+                                    11,
+                                vertical:
+                                    7,
                               ),
                               decoration:
                                   BoxDecoration(
@@ -288,45 +367,48 @@ class HomePage extends StatelessWidget {
                                     const Color(
                                   0xFF236B3A,
                                 ).withValues(
-                                  alpha: 0.72,
+                                  alpha:
+                                      0.72,
                                 ),
                                 borderRadius:
-                                    BorderRadius
-                                        .circular(
+                                    BorderRadius.circular(
                                   18,
                                 ),
                                 border:
                                     Border.all(
-                                  color: Colors
-                                      .white
-                                      .withValues(
-                                    alpha: 0.20,
+                                  color:
+                                      Colors.white.withValues(
+                                    alpha:
+                                        0.20,
                                   ),
                                 ),
                               ),
-                              child: Row(
+                              child:
+                                  Row(
                                 children: [
                                   const Icon(
-                                    Icons
-                                        .star_rounded,
+                                    Icons.star_rounded,
                                     color:
                                         Color(
                                       0xFFFFD23F,
                                     ),
-                                    size: 20,
+                                    size:
+                                        20,
                                   ),
+
                                   const SizedBox(
-                                    width: 5,
+                                    width:
+                                        5,
                                   ),
+
                                   Text(
-                                    '${profile.stars}',
+                                    '$stars',
                                     style:
                                         const TextStyle(
                                       color:
                                           Colors.white,
                                       fontWeight:
-                                          FontWeight
-                                              .w700,
+                                          FontWeight.w700,
                                     ),
                                   ),
                                 ],
@@ -340,27 +422,34 @@ class HomePage extends StatelessWidget {
                         // =========================================
 
                         const SizedBox(
-                          height: 2,
+                          height:
+                              2,
                         ),
 
                         Align(
                           alignment:
                               Alignment.centerRight,
-                          child: Padding(
+                          child:
+                              Padding(
                             padding:
                                 const EdgeInsets.only(
-                              right: 1,
+                              right:
+                                  1,
                             ),
-                            child: Image.asset(
+                            child:
+                                Image.asset(
                               'assets/images/torti_read.png',
-                              height: 170,
-                              fit: BoxFit.contain,
+                              height:
+                                  170,
+                              fit:
+                                  BoxFit.contain,
                             ),
                           ),
                         ),
 
                         const SizedBox(
-                          height: 5,
+                          height:
+                              5,
                         ),
 
                         // =========================================
@@ -390,12 +479,11 @@ class HomePage extends StatelessWidget {
                                     const Color(
                                   0xFFE7F7D8,
                                 ),
-                                onTap: () {
-                                  HapticFeedback
-                                      .selectionClick();
+                                onTap:
+                                    () {
+                                  HapticFeedback.selectionClick();
 
-                                  Navigator
-                                      .pushNamed(
+                                  Navigator.pushNamed(
                                     context,
                                     '/missions',
                                   );
@@ -404,7 +492,8 @@ class HomePage extends StatelessWidget {
                             ),
 
                             const SizedBox(
-                              width: 12,
+                              width:
+                                  12,
                             ),
 
                             // =====================================
@@ -418,8 +507,8 @@ class HomePage extends StatelessWidget {
                                     'Juegos\neducativos',
                                 subtitle:
                                     'Aprende jugando y diviértete',
-                                icon: Icons
-                                    .sports_esports_rounded,
+                                icon:
+                                    Icons.sports_esports_rounded,
                                 iconColor:
                                     const Color(
                                   0xFF318CB8,
@@ -428,9 +517,9 @@ class HomePage extends StatelessWidget {
                                     const Color(
                                   0xFFE5F6FC,
                                 ),
-                                onTap: () {
-                                  HapticFeedback
-                                      .selectionClick();
+                                onTap:
+                                    () {
+                                  HapticFeedback.selectionClick();
 
                                   debugPrint(
                                     'Juegos',
@@ -442,7 +531,8 @@ class HomePage extends StatelessWidget {
                         ),
 
                         const SizedBox(
-                          height: 12,
+                          height:
+                              12,
                         ),
 
                         // =========================================
@@ -458,11 +548,12 @@ class HomePage extends StatelessWidget {
                             Expanded(
                               child:
                                   _HomeOptionCard(
-                                title: 'Aprende',
+                                title:
+                                    'Aprende',
                                 subtitle:
                                     'Explora, escucha y descubre',
-                                icon: Icons
-                                    .menu_book_rounded,
+                                icon:
+                                    Icons.menu_book_rounded,
                                 iconColor:
                                     const Color(
                                   0xFF9C27D8,
@@ -471,9 +562,9 @@ class HomePage extends StatelessWidget {
                                     const Color(
                                   0xFFF6E9FF,
                                 ),
-                                onTap: () {
-                                  HapticFeedback
-                                      .selectionClick();
+                                onTap:
+                                    () {
+                                  HapticFeedback.selectionClick();
 
                                   debugPrint(
                                     'Aprende',
@@ -483,7 +574,8 @@ class HomePage extends StatelessWidget {
                             ),
 
                             const SizedBox(
-                              width: 12,
+                              width:
+                                  12,
                             ),
 
                             // =====================================
@@ -493,11 +585,12 @@ class HomePage extends StatelessWidget {
                             Expanded(
                               child:
                                   _HomeOptionCard(
-                                title: 'Logros',
+                                title:
+                                    'Logros',
                                 subtitle:
                                     'Gana recompensas y desbloquea medallas',
-                                icon: Icons
-                                    .emoji_events_rounded,
+                                icon:
+                                    Icons.emoji_events_rounded,
                                 iconColor:
                                     const Color(
                                   0xFFE8A700,
@@ -523,20 +616,21 @@ class HomePage extends StatelessWidget {
                           width:
                               double.infinity,
                           padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            horizontal: 18,
-                            vertical: 12,
+                              const EdgeInsets.symmetric(
+                            horizontal:
+                                18,
+                            vertical:
+                                12,
                           ),
                           decoration:
                               BoxDecoration(
-                            color: Colors.white
-                                .withValues(
-                              alpha: 0.94,
+                            color:
+                                Colors.white.withValues(
+                              alpha:
+                                  0.94,
                             ),
                             borderRadius:
-                                BorderRadius
-                                    .circular(
+                                BorderRadius.circular(
                               20,
                             ),
                             border:
@@ -545,7 +639,8 @@ class HomePage extends StatelessWidget {
                                   const Color(
                                 0xFF7BCB4D,
                               ).withValues(
-                                alpha: 0.40,
+                                alpha:
+                                    0.40,
                               ),
                             ),
                             boxShadow: [
@@ -554,9 +649,11 @@ class HomePage extends StatelessWidget {
                                     const Color(
                                   0xFF236B3A,
                                 ).withValues(
-                                  alpha: 0.15,
+                                  alpha:
+                                      0.15,
                                 ),
-                                blurRadius: 10,
+                                blurRadius:
+                                    10,
                                 offset:
                                     const Offset(
                                   0,
@@ -568,38 +665,41 @@ class HomePage extends StatelessWidget {
                           child:
                               const Row(
                             mainAxisAlignment:
-                                MainAxisAlignment
-                                    .center,
+                                MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons
-                                    .eco_rounded,
+                                Icons.eco_rounded,
                                 color:
                                     Color(
                                   0xFF59B83A,
                                 ),
-                                size: 26,
+                                size:
+                                    26,
                               ),
+
                               SizedBox(
-                                width: 9,
+                                width:
+                                    9,
                               ),
+
                               Flexible(
-                                child: Text(
+                                child:
+                                    Text(
                                   'Pequeñas acciones hacen grandes cambios',
                                   textAlign:
-                                      TextAlign
-                                          .center,
+                                      TextAlign.center,
                                   style:
                                       TextStyle(
                                     color:
                                         Color(
                                       0xFF59666D,
                                     ),
-                                    fontSize: 13,
-                                    height: 1.15,
+                                    fontSize:
+                                        13,
+                                    height:
+                                        1.15,
                                     fontWeight:
-                                        FontWeight
-                                            .w500,
+                                        FontWeight.w500,
                                   ),
                                 ),
                               ),
@@ -608,7 +708,8 @@ class HomePage extends StatelessWidget {
                         ),
 
                         const SizedBox(
-                          height: 14,
+                          height:
+                              14,
                         ),
                       ],
                     ),
@@ -632,18 +733,21 @@ class HomePage extends StatelessWidget {
               ),
               decoration:
                   BoxDecoration(
-                color: Colors.white,
+                color:
+                    Colors.white,
                 borderRadius:
                     BorderRadius.circular(
                   20,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black
-                        .withValues(
-                      alpha: 0.16,
+                    color:
+                        Colors.black.withValues(
+                      alpha:
+                          0.16,
                     ),
-                    blurRadius: 18,
+                    blurRadius:
+                        18,
                     offset:
                         const Offset(
                       0,
@@ -652,14 +756,18 @@ class HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  height: 66,
-                  child: Row(
+              child:
+                  SafeArea(
+                top:
+                    false,
+                child:
+                    SizedBox(
+                  height:
+                      66,
+                  child:
+                      Row(
                     mainAxisAlignment:
-                        MainAxisAlignment
-                            .spaceAround,
+                        MainAxisAlignment.spaceAround,
                     children: [
                       // ===========================================
                       // INICIO
@@ -668,8 +776,10 @@ class HomePage extends StatelessWidget {
                       const _BottomNavItem(
                         icon:
                             Icons.home_rounded,
-                        label: 'Inicio',
-                        selected: true,
+                        label:
+                            'Inicio',
+                        selected:
+                            true,
                       ),
 
                       // ===========================================
@@ -677,12 +787,13 @@ class HomePage extends StatelessWidget {
                       // ===========================================
 
                       _BottomNavItem(
-                        icon: Icons
-                            .sports_esports_rounded,
-                        label: 'Juegos',
-                        onTap: () {
-                          HapticFeedback
-                              .selectionClick();
+                        icon:
+                            Icons.sports_esports_rounded,
+                        label:
+                            'Juegos',
+                        onTap:
+                            () {
+                          HapticFeedback.selectionClick();
 
                           debugPrint(
                             'Juegos',
@@ -695,12 +806,13 @@ class HomePage extends StatelessWidget {
                       // ===========================================
 
                       _BottomNavItem(
-                        icon: Icons
-                            .menu_book_rounded,
-                        label: 'Aprende',
-                        onTap: () {
-                          HapticFeedback
-                              .selectionClick();
+                        icon:
+                            Icons.menu_book_rounded,
+                        label:
+                            'Aprende',
+                        onTap:
+                            () {
+                          HapticFeedback.selectionClick();
 
                           debugPrint(
                             'Aprende',
@@ -713,9 +825,10 @@ class HomePage extends StatelessWidget {
                       // ===========================================
 
                       _BottomNavItem(
-                        icon: Icons
-                            .emoji_events_rounded,
-                        label: 'Logros',
+                        icon:
+                            Icons.emoji_events_rounded,
+                        label:
+                            'Logros',
                         onTap:
                             openAchievements,
                       ),
@@ -725,9 +838,10 @@ class HomePage extends StatelessWidget {
                       // ===========================================
 
                       _BottomNavItem(
-                        icon: Icons
-                            .chat_bubble_rounded,
-                        label: 'Torti',
+                        icon:
+                            Icons.chat_bubble_rounded,
+                        label:
+                            'Torti',
                         onTap:
                             openTortiChat,
                       ),
@@ -744,7 +858,7 @@ class HomePage extends StatelessWidget {
 }
 
 // =====================================================================
-// SIN PERFIL ACTIVO
+// SIN USUARIO AUTENTICADO
 // =====================================================================
 
 class _NoActiveProfilePage
@@ -756,29 +870,38 @@ class _NoActiveProfilePage
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Scaffold(
       backgroundColor:
           const Color(
         0xFF236B3A,
       ),
-      body: Stack(
-        fit: StackFit.expand,
+      body:
+          Stack(
+        fit:
+            StackFit.expand,
         children: [
           Image.asset(
             'assets/images/fondo3.png',
-            fit: BoxFit.cover,
+            fit:
+                BoxFit.cover,
           ),
 
           Container(
-            color: Colors.black.withValues(
-              alpha: 0.10,
+            color:
+                Colors.black.withValues(
+              alpha:
+                  0.10,
             ),
           ),
 
           SafeArea(
-            child: Center(
-              child: Container(
+            child:
+                Center(
+              child:
+                  Container(
                 margin:
                     const EdgeInsets.all(
                   24,
@@ -789,69 +912,79 @@ class _NoActiveProfilePage
                 ),
                 decoration:
                     BoxDecoration(
-                  color: Colors.white,
+                  color:
+                      Colors.white,
                   borderRadius:
-                      BorderRadius
-                          .circular(
+                      BorderRadius.circular(
                     24,
                   ),
                 ),
-                child: Column(
+                child:
+                    Column(
                   mainAxisSize:
                       MainAxisSize.min,
                   children: [
                     const Text(
                       '🐢',
-                      style: TextStyle(
-                        fontSize: 55,
+                      style:
+                          TextStyle(
+                        fontSize:
+                            55,
                       ),
                     ),
 
                     const SizedBox(
-                      height: 12,
+                      height:
+                          12,
                     ),
 
                     const Text(
-                      'No hay un perfil activo',
+                      'No hay un usuario activo',
                       textAlign:
                           TextAlign.center,
-                      style: TextStyle(
-                        color: Color(
+                      style:
+                          TextStyle(
+                        color:
+                            Color(
                           0xFF236B3A,
                         ),
-                        fontSize: 20,
+                        fontSize:
+                            20,
                         fontWeight:
-                            FontWeight
-                                .w800,
+                            FontWeight.w800,
                       ),
                     ),
 
                     const SizedBox(
-                      height: 8,
+                      height:
+                          8,
                     ),
 
                     const Text(
-                      'Selecciona tu perfil para continuar.',
+                      'Selecciona tu perfil e ingresa tu PIN para continuar.',
                       textAlign:
                           TextAlign.center,
-                      style: TextStyle(
-                        color: Color(
+                      style:
+                          TextStyle(
+                        color:
+                            Color(
                           0xFF718089,
                         ),
-                        fontSize: 13,
+                        fontSize:
+                            13,
                       ),
                     ),
 
                     const SizedBox(
-                      height: 20,
+                      height:
+                          20,
                     ),
 
                     ElevatedButton(
                       onPressed:
                           onReturnToLogin,
                       style:
-                          ElevatedButton
-                              .styleFrom(
+                          ElevatedButton.styleFrom(
                         backgroundColor:
                             const Color(
                           0xFF45A049,
@@ -859,16 +992,16 @@ class _NoActiveProfilePage
                         foregroundColor:
                             Colors.white,
                         padding:
-                            const EdgeInsets
-                                .symmetric(
-                          horizontal: 24,
-                          vertical: 13,
+                            const EdgeInsets.symmetric(
+                          horizontal:
+                              24,
+                          vertical:
+                              13,
                         ),
                         shape:
                             RoundedRectangleBorder(
                           borderRadius:
-                              BorderRadius
-                                  .circular(
+                              BorderRadius.circular(
                             14,
                           ),
                         ),
@@ -879,8 +1012,7 @@ class _NoActiveProfilePage
                         style:
                             TextStyle(
                           fontWeight:
-                              FontWeight
-                                  .w700,
+                              FontWeight.w700,
                         ),
                       ),
                     ),
@@ -918,26 +1050,34 @@ class _HomeOptionCard
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Material(
-      color: Colors.white,
+      color:
+          Colors.white,
       borderRadius:
           BorderRadius.circular(
         22,
       ),
-      child: InkWell(
-        onTap: onTap,
+      child:
+          InkWell(
+        onTap:
+            onTap,
         borderRadius:
             BorderRadius.circular(
           22,
         ),
-        child: Container(
-          height: 112,
+        child:
+            Container(
+          height:
+              112,
           padding:
-              const EdgeInsets
-                  .symmetric(
-            horizontal: 12,
-            vertical: 10,
+              const EdgeInsets.symmetric(
+            horizontal:
+                12,
+            vertical:
+                10,
           ),
           decoration:
               BoxDecoration(
@@ -945,22 +1085,29 @@ class _HomeOptionCard
                 BorderRadius.circular(
               22,
             ),
-            border: Border.all(
-              color: const Color(
+            border:
+                Border.all(
+              color:
+                  const Color(
                 0xFF7BCB4D,
               ).withValues(
-                alpha: 0.26,
+                alpha:
+                    0.26,
               ),
-              width: 1.4,
+              width:
+                  1.4,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(
+                color:
+                    const Color(
                   0xFF236B3A,
                 ).withValues(
-                  alpha: 0.12,
+                  alpha:
+                      0.12,
                 ),
-                blurRadius: 12,
+                blurRadius:
+                    12,
                 offset:
                     const Offset(
                   0,
@@ -969,15 +1116,18 @@ class _HomeOptionCard
               ),
             ],
           ),
-          child: Row(
+          child:
+              Row(
             children: [
               // =================================================
               // ICONO
               // =================================================
 
               Container(
-                width: 46,
-                height: 46,
+                width:
+                    46,
+                height:
+                    46,
                 decoration:
                     BoxDecoration(
                   color:
@@ -985,15 +1135,19 @@ class _HomeOptionCard
                   shape:
                       BoxShape.circle,
                 ),
-                child: Icon(
+                child:
+                    Icon(
                   icon,
-                  color: iconColor,
-                  size: 27,
+                  color:
+                      iconColor,
+                  size:
+                      27,
                 ),
               ),
 
               const SizedBox(
-                width: 9,
+                width:
+                    9,
               ),
 
               // =================================================
@@ -1001,51 +1155,55 @@ class _HomeOptionCard
               // =================================================
 
               Expanded(
-                child: Column(
+                child:
+                    Column(
                   mainAxisAlignment:
-                      MainAxisAlignment
-                          .center,
+                      MainAxisAlignment.center,
                   crossAxisAlignment:
-                      CrossAxisAlignment
-                          .center,
+                      CrossAxisAlignment.center,
                   children: [
                     Text(
                       title,
                       textAlign:
                           TextAlign.center,
-                      style: TextStyle(
+                      style:
+                          TextStyle(
                         color:
                             iconColor,
-                        fontSize: 14,
-                        height: 1.05,
+                        fontSize:
+                            14,
+                        height:
+                            1.05,
                         fontWeight:
-                            FontWeight
-                                .w800,
+                            FontWeight.w800,
                       ),
                     ),
 
                     const SizedBox(
-                      height: 7,
+                      height:
+                          7,
                     ),
 
                     Text(
                       subtitle,
-                      maxLines: 2,
+                      maxLines:
+                          2,
                       overflow:
-                          TextOverflow
-                              .ellipsis,
+                          TextOverflow.ellipsis,
                       textAlign:
                           TextAlign.center,
                       style:
                           const TextStyle(
-                        color: Color(
+                        color:
+                            Color(
                           0xFF59666D,
                         ),
-                        fontSize: 8.5,
-                        height: 1.15,
+                        fontSize:
+                            8.5,
+                        height:
+                            1.15,
                         fontWeight:
-                            FontWeight
-                                .w500,
+                            FontWeight.w500,
                       ),
                     ),
                   ],
@@ -1078,58 +1236,70 @@ class _BottomNavItem
   });
 
   @override
-  Widget build(BuildContext context) {
-    final color = selected
-        ? const Color(
-            0xFF45A049,
-          )
-        : const Color(
-            0xFF7B878D,
-          );
+  Widget build(
+    BuildContext context,
+  ) {
+    final Color color =
+        selected
+            ? const Color(
+                0xFF45A049,
+              )
+            : const Color(
+                0xFF7B878D,
+              );
 
     return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
+      color:
+          Colors.transparent,
+      child:
+          InkWell(
+        onTap:
+            onTap,
         borderRadius:
             BorderRadius.circular(
           14,
         ),
-        child: Padding(
+        child:
+            Padding(
           padding:
-              const EdgeInsets
-                  .symmetric(
-            horizontal: 9,
-            vertical: 7,
+              const EdgeInsets.symmetric(
+            horizontal:
+                9,
+            vertical:
+                7,
           ),
-          child: Column(
+          child:
+              Column(
             mainAxisSize:
                 MainAxisSize.min,
             mainAxisAlignment:
-                MainAxisAlignment
-                    .center,
+                MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
-                color: color,
-                size: 23,
+                color:
+                    color,
+                size:
+                    23,
               ),
 
               const SizedBox(
-                height: 3,
+                height:
+                    3,
               ),
 
               Text(
                 label,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 9,
+                style:
+                    TextStyle(
+                  color:
+                      color,
+                  fontSize:
+                      9,
                   fontWeight:
                       selected
-                          ? FontWeight
-                              .w700
-                          : FontWeight
-                              .w500,
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                 ),
               ),
             ],

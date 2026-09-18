@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-import '../../../data/services/player_progress_service.dart';
+import '../../../data/services/current_user_service.dart';
 
 class MissionsPage extends StatefulWidget {
   const MissionsPage({super.key});
@@ -22,11 +22,11 @@ class _MissionsPageState extends State<MissionsPage> {
   bool _musicReady = false;
 
   // =============================================================
-  // PROGRESO DE MISIONES
+  // USUARIO ACTUAL Y PROGRESO DE MISIONES
   // =============================================================
 
-  final PlayerProgressService _progressService =
-      PlayerProgressService.instance;
+  final CurrentUserService _currentUserService =
+      CurrentUserService.instance;
 
   bool _plantSeedCompleted = false;
 
@@ -46,14 +46,75 @@ class _MissionsPageState extends State<MissionsPage> {
   void initState() {
     super.initState();
 
-    // Cargamos el progreso real del perfil activo.
-    _plantSeedCompleted =
-        _progressService.isMissionCompleted('plant_seed');
-
-    _waterMissionUnlocked =
-        _progressService.isMissionUnlocked('mission_2');
+    _loadCurrentUserProgress();
 
     _startMusic();
+  }
+
+  // =============================================================
+  // CARGAR PROGRESO DEL USUARIO AUTENTICADO
+  // =============================================================
+
+  void _loadCurrentUserProgress() {
+    final Map<String, dynamic>? user =
+        _currentUserService.currentUser;
+
+    if (user == null) {
+      _plantSeedCompleted = false;
+      _waterMissionUnlocked = false;
+      return;
+    }
+
+    final dynamic rawCompletedMissions =
+        user['completedMissions'];
+
+    final List<String> completedMissions =
+        rawCompletedMissions is List
+            ? rawCompletedMissions
+                .map(
+                  (dynamic item) =>
+                      item.toString(),
+                )
+                .toList()
+            : <String>[];
+
+    _plantSeedCompleted =
+        completedMissions.contains(
+      'plant_seed',
+    );
+
+    _waterMissionUnlocked =
+        _plantSeedCompleted ||
+        completedMissions.contains(
+          'mission_2',
+        );
+  }
+
+  // =============================================================
+  // OBTENER MISIONES COMPLETADAS DEL USUARIO
+  // =============================================================
+
+  List<String> _getCompletedMissions() {
+    final Map<String, dynamic>? user =
+        _currentUserService.currentUser;
+
+    if (user == null) {
+      return <String>[];
+    }
+
+    final dynamic rawCompletedMissions =
+        user['completedMissions'];
+
+    if (rawCompletedMissions is! List) {
+      return <String>[];
+    }
+
+    return rawCompletedMissions
+        .map(
+          (dynamic item) =>
+              item.toString(),
+        )
+        .toList();
   }
 
   // =============================================================
@@ -588,40 +649,50 @@ class _MissionsPageState extends State<MissionsPage> {
   Future<void>
       _completePlantSeedMission() async {
     // ===========================================================
-    // PASO 1
-    // GUARDAR LA MISIÓN EN EL PROGRESO CENTRAL
-    // ===========================================================
-    //
-    // completeMission() entrega las 20 estrellas solamente
-    // la primera vez. Si el jugador repite la misión, devuelve
-    // false y NO vuelve a sumar estrellas.
+    // VALIDAR USUARIO AUTENTICADO
     // ===========================================================
 
-    final rewardGranted =
-        await _progressService.completeMission(
-      'plant_seed',
-    );
+    if (!_currentUserService.hasUser) {
+      if (!mounted) {
+        return;
+      }
 
-    if (!mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No hay un usuario autenticado.',
+            ),
+          ),
+        );
+
       return;
     }
 
-    // Sincronizamos la interfaz con el progreso guardado.
-    setState(() {
-      _plantSeedCompleted =
-          _progressService.isMissionCompleted(
-        'plant_seed',
-      );
+    // ===========================================================
+    // OBTENER MISIONES DEL USUARIO ACTUAL
+    // ===========================================================
 
-      _waterMissionUnlocked =
-          _progressService.isMissionUnlocked(
-        'mission_2',
-      );
-    });
+    final List<String> completedMissions =
+        _getCompletedMissions();
 
-    // Si la misión ya estaba completada, no repetimos
-    // ni las estrellas ni la animación de desbloqueo.
-    if (!rewardGranted) {
+    // ===========================================================
+    // EVITAR ENTREGAR LA RECOMPENSA DOS VECES
+    // ===========================================================
+
+    if (completedMissions.contains(
+      'plant_seed',
+    )) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _plantSeedCompleted = true;
+        _waterMissionUnlocked = true;
+      });
+
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -639,23 +710,57 @@ class _MissionsPageState extends State<MissionsPage> {
     }
 
     // ===========================================================
-    // PASO 2
+    // GUARDAR MISIÓN COMPLETADA EN EL USUARIO ACTUAL
+    // ===========================================================
+
+    completedMissions.add(
+      'plant_seed',
+    );
+
+    _currentUserService.updateCurrentUser(
+      <String, dynamic>{
+        'completedMissions':
+            completedMissions,
+      },
+    );
+
+    // ===========================================================
+    // ENTREGAR 20 ESTRELLAS AL USUARIO AUTENTICADO
+    // ===========================================================
+
+    _currentUserService.addStars(
+      20,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _plantSeedCompleted = true;
+      _waterMissionUnlocked = true;
+    });
+
+    // ===========================================================
     // CONFIRMAR RECOMPENSA
     // ===========================================================
 
     HapticFeedback.mediumImpact();
 
-    final profile =
-        _progressService.activeProfile;
+    final String playerName =
+        _currentUserService.displayName.isNotEmpty
+            ? _currentUserService.displayName
+            : 'tu perfil';
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(
-            '+20 ⭐ para ${profile?.name ?? 'tu perfil'}',
+            '+20 ⭐ para $playerName',
           ),
-          duration: const Duration(
+          duration:
+              const Duration(
             milliseconds: 1700,
           ),
         ),
@@ -673,7 +778,6 @@ class _MissionsPageState extends State<MissionsPage> {
     }
 
     // ===========================================================
-    // PASO 3
     // MOSTRAR DESBLOQUEO DE AHORRA AGUA
     // ===========================================================
 
@@ -686,7 +790,6 @@ class _MissionsPageState extends State<MissionsPage> {
     HapticFeedback.heavyImpact();
 
     // ===========================================================
-    // PASO 4
     // DEJAMOS CORRER LA ANIMACIÓN
     // ===========================================================
 
@@ -705,7 +808,6 @@ class _MissionsPageState extends State<MissionsPage> {
     });
 
     // ===========================================================
-    // PASO 5
     // EL MENSAJE QUEDA UN POCO MÁS
     // ===========================================================
 
@@ -723,6 +825,7 @@ class _MissionsPageState extends State<MissionsPage> {
       _showUnlockBanner = false;
     });
   }
+
 }
 
 // =====================================================================

@@ -11,33 +11,21 @@ class UserService {
       UserService._();
 
   // ============================================================
-  // BACKEND TORTIGO
+  // BACKEND
   // ============================================================
   //
-  // Estamos trabajando con un teléfono físico y ADB Reverse.
+  // Estamos usando:
   //
-  // Debes ejecutar en PowerShell:
+  // adb reverse tcp:5000 tcp:5000
   //
-  // & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" reverse tcp:5000 tcp:5000
+  // Por eso desde Android podemos usar:
   //
-  // Esto permite que:
-  //
-  // Flutter / Android:
   // http://127.0.0.1:5000
-  //
-  // apunte hacia:
-  //
-  // PC:
-  // http://localhost:5000
   //
   // ============================================================
 
   static const String baseUrl =
       'http://127.0.0.1:5000';
-
-  // ============================================================
-  // TIMEOUT
-  // ============================================================
 
   static const Duration _timeout =
       Duration(
@@ -95,120 +83,251 @@ class UserService {
                 _timeout,
               );
 
-      // ========================================================
-      // LEER RESPUESTA
-      // ========================================================
+      return _processMapResponse(
+        response,
+      );
+    } on TimeoutException {
+      throw Exception(
+        'El servidor tardó demasiado en responder.',
+      );
+    } on SocketException {
+      throw Exception(
+        'No fue posible conectar con el servidor.',
+      );
+    } on http.ClientException catch (error) {
+      throw Exception(
+        'Error de conexión: $error',
+      );
+    }
+  }
 
-      Map<String, dynamic> data =
-          <String, dynamic>{};
+  // ============================================================
+  // OBTENER PERFILES DE LA BASE DE DATOS
+  //
+  // GET:
+  // /api/Users/profiles
+  // ============================================================
 
-      if (response.body.isNotEmpty) {
+  Future<List<Map<String, dynamic>>>
+      getProfiles() async {
+    final Uri uri = Uri.parse(
+      '$baseUrl/api/Users/profiles',
+    );
+
+    try {
+      final http.Response response =
+          await http
+              .get(
+                uri,
+                headers: {
+                  'Accept':
+                      'application/json',
+                },
+              )
+              .timeout(
+                _timeout,
+              );
+
+      final Map<String, dynamic> result =
+          _processMapResponse(
+        response,
+      );
+
+      final dynamic data =
+          result['data'];
+
+      if (data is! List) {
+        return <Map<String, dynamic>>[];
+      }
+
+      return data
+          .whereType<Map>()
+          .map(
+            (dynamic item) =>
+                Map<String, dynamic>.from(
+              item as Map,
+            ),
+          )
+          .toList();
+    } on TimeoutException {
+      throw Exception(
+        'El servidor tardó demasiado en cargar los perfiles.',
+      );
+    } on SocketException {
+      throw Exception(
+        'No fue posible conectar con el servidor.',
+      );
+    } on http.ClientException catch (error) {
+      throw Exception(
+        'Error de conexión: $error',
+      );
+    }
+  }
+
+  // ============================================================
+  // LOGIN
+  //
+  // POST:
+  // /api/Users/login
+  //
+  // Backend recibe:
+  //
+  // {
+  //   "displayName": "...",
+  //   "pin": "1234"
+  // }
+  // ============================================================
+
+  Future<Map<String, dynamic>> login({
+    required String displayName,
+    required String pin,
+  }) async {
+    final Uri uri = Uri.parse(
+      '$baseUrl/api/Users/login',
+    );
+
+    try {
+      final http.Response response =
+          await http
+              .post(
+                uri,
+                headers: {
+                  'Content-Type':
+                      'application/json; charset=UTF-8',
+                  'Accept':
+                      'application/json',
+                },
+                body: jsonEncode(
+                  {
+                    'displayName':
+                        displayName,
+                    'pin':
+                        pin,
+                  },
+                ),
+              )
+              .timeout(
+                _timeout,
+              );
+
+      return _processMapResponse(
+        response,
+      );
+    } on TimeoutException {
+      throw Exception(
+        'El servidor tardó demasiado en iniciar sesión.',
+      );
+    } on SocketException {
+      throw Exception(
+        'No fue posible conectar con el servidor.',
+      );
+    } on http.ClientException catch (error) {
+      throw Exception(
+        'Error de conexión: $error',
+      );
+    }
+  }
+
+  // ============================================================
+  // ACTUALIZAR AVATAR
+  // ============================================================
+
+  Future<Map<String, dynamic>>
+      updateAvatar({
+    required String userId,
+    required String avatarType,
+    required String avatarValue,
+  }) async {
+    final Uri uri = Uri.parse(
+      '$baseUrl/api/Users/$userId/avatar',
+    );
+
+    try {
+      final http.Response response =
+          await http
+              .patch(
+                uri,
+                headers: {
+                  'Content-Type':
+                      'application/json; charset=UTF-8',
+                  'Accept':
+                      'application/json',
+                },
+                body: jsonEncode(
+                  {
+                    'avatarType':
+                        avatarType,
+                    'avatarValue':
+                        avatarValue,
+                  },
+                ),
+              )
+              .timeout(
+                _timeout,
+              );
+
+      return _processMapResponse(
+        response,
+      );
+    } on TimeoutException {
+      throw Exception(
+        'El servidor tardó demasiado en actualizar el avatar.',
+      );
+    } on SocketException {
+      throw Exception(
+        'No fue posible conectar con el servidor.',
+      );
+    } on http.ClientException catch (error) {
+      throw Exception(
+        'Error de conexión: $error',
+      );
+    }
+  }
+
+  // ============================================================
+  // PROCESAR RESPUESTA JSON
+  // ============================================================
+
+  Map<String, dynamic> _processMapResponse(
+    http.Response response,
+  ) {
+    Map<String, dynamic> data =
+        <String, dynamic>{};
+
+    if (response.body.isNotEmpty) {
+      try {
         final dynamic decoded =
             jsonDecode(
-          response.body,
+          utf8.decode(
+            response.bodyBytes,
+          ),
         );
 
-        if (decoded
-            is Map<String, dynamic>) {
+        if (decoded is Map) {
           data =
-              decoded;
+              Map<String, dynamic>.from(
+            decoded,
+          );
         }
-      }
-
-      // ========================================================
-      // RESPUESTA CORRECTA
-      // ========================================================
-
-      if (response.statusCode >= 200 &&
-          response.statusCode < 300) {
-        return data;
-      }
-
-      // ========================================================
-      // ERROR DEVUELTO POR EL BACKEND
-      // ========================================================
-
-      final String message =
-          data['message']
-                  ?.toString() ??
-              'No fue posible crear el usuario.';
-
-      final String? backendError =
-          data['error']
-              ?.toString();
-
-      if (backendError != null &&
-          backendError.isNotEmpty) {
+      } on FormatException {
         throw Exception(
-          '$message\n\n$backendError',
+          'El servidor devolvió una respuesta inválida.',
         );
       }
-
-      throw Exception(
-        message,
-      );
     }
 
-    // ==========================================================
-    // TIMEOUT
-    // ==========================================================
-
-    on TimeoutException {
-      throw Exception(
-        'El servidor tardó demasiado en responder.\n\n'
-        'Verifica que el backend esté ejecutándose '
-        'en el puerto 5000.',
-      );
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
+      return data;
     }
 
-    // ==========================================================
-    // ERROR DE SOCKET
-    // ==========================================================
+    final String message =
+        data['message']
+                ?.toString() ??
+            'Ocurrió un error en el servidor.';
 
-    on SocketException catch (error) {
-      throw Exception(
-        'No fue posible conectar con el backend.\n\n'
-        'Verifica que ASP.NET Core esté ejecutándose '
-        'en el puerto 5000 y que ADB Reverse esté activo.\n\n'
-        'Detalle: $error',
-      );
-    }
-
-    // ==========================================================
-    // ERROR HTTP
-    // ==========================================================
-
-    on http.ClientException catch (error) {
-      throw Exception(
-        'Error de conexión con el servidor.\n\n'
-        '$error',
-      );
-    }
-
-    // ==========================================================
-    // ERROR DE FORMATO JSON
-    // ==========================================================
-
-    on FormatException catch (error) {
-      throw Exception(
-        'El servidor devolvió una respuesta inválida.\n\n'
-        '$error',
-      );
-    }
-
-    // ==========================================================
-    // OTROS ERRORES
-    // ==========================================================
-
-    catch (error) {
-      if (error is Exception) {
-        rethrow;
-      }
-
-      throw Exception(
-        'Ocurrió un error inesperado.\n\n'
-        '$error',
-      );
-    }
+    throw Exception(
+      message,
+    );
   }
 }

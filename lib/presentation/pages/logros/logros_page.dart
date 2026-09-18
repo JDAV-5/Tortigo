@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../data/services/player_progress_service.dart';
+import '../../../data/services/current_user_service.dart';
 
 import '../torti_chat/torti_chat_page.dart';
 
@@ -11,23 +11,68 @@ class LogrosPage extends StatelessWidget {
   });
 
   // ===================================================================
+  // CONFIGURACIÓN DE MEDALLAS
+  // ===================================================================
+
+  static const int _sembradorCost = 90;
+
+  // ===================================================================
+  // OBTENER MEDALLAS DEL USUARIO ACTUAL
+  // ===================================================================
+
+  List<String> _getOwnedMedals(
+    CurrentUserService currentUserService,
+  ) {
+    final Map<String, dynamic>? user =
+        currentUserService.currentUser;
+
+    if (user == null) {
+      return <String>[];
+    }
+
+    final dynamic rawOwnedMedals =
+        user['ownedMedals'];
+
+    if (rawOwnedMedals is! List) {
+      return <String>[];
+    }
+
+    return rawOwnedMedals
+        .map(
+          (dynamic item) =>
+              item.toString(),
+        )
+        .toList();
+  }
+
+  // ===================================================================
+  // VERIFICAR SI EL USUARIO TIENE UNA MEDALLA
+  // ===================================================================
+
+  bool _ownsMedal(
+    CurrentUserService currentUserService,
+    String medalId,
+  ) {
+    return _getOwnedMedals(
+      currentUserService,
+    ).contains(
+      medalId,
+    );
+  }
+
+  // ===================================================================
   // COMPRAR MEDALLA SEMBRADOR
   // ===================================================================
 
   Future<void> _buySembrador(
     BuildContext context,
-    PlayerProgressService progressService,
+    CurrentUserService currentUserService,
   ) async {
-    final profile =
-        progressService.activeProfile;
+    // ================================================================
+    // VALIDAR USUARIO
+    // ================================================================
 
-    final medal =
-        progressService.getMedal(
-      'sembrador',
-    );
-
-    if (profile == null ||
-        medal == null) {
+    if (!currentUserService.hasUser) {
       return;
     }
 
@@ -35,8 +80,9 @@ class LogrosPage extends StatelessWidget {
     // YA TIENE LA MEDALLA
     // ================================================================
 
-    if (profile.ownsMedal(
-      medal.id,
+    if (_ownsMedal(
+      currentUserService,
+      'sembrador',
     )) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -55,11 +101,11 @@ class LogrosPage extends StatelessWidget {
     // NO TIENE SUFICIENTES ESTRELLAS
     // ================================================================
 
-    if (profile.stars <
-        medal.costStars) {
-      final missing =
-          medal.costStars -
-              profile.stars;
+    if (currentUserService.stars <
+        _sembradorCost) {
+      final int missing =
+          _sembradorCost -
+              currentUserService.stars;
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -78,16 +124,16 @@ class LogrosPage extends StatelessWidget {
     // CONFIRMACIÓN
     // ================================================================
 
-    final confirmed =
+    final bool? confirmed =
         await showDialog<bool>(
-      context: context,
+      context:
+          context,
       builder: (
-        dialogContext,
+        BuildContext dialogContext,
       ) {
         return AlertDialog(
           backgroundColor:
               Colors.white,
-
           shape:
               RoundedRectangleBorder(
             borderRadius:
@@ -95,7 +141,6 @@ class LogrosPage extends StatelessWidget {
               24,
             ),
           ),
-
           title:
               const Row(
             children: [
@@ -107,12 +152,10 @@ class LogrosPage extends StatelessWidget {
                       30,
                 ),
               ),
-
               SizedBox(
                 width:
                     10,
               ),
-
               Expanded(
                 child:
                     Text(
@@ -124,20 +167,18 @@ class LogrosPage extends StatelessWidget {
                       0xFF236B3A,
                     ),
                     fontWeight:
-                        FontWeight
-                            .w800,
+                        FontWeight.w800,
                   ),
                 ),
               ),
             ],
           ),
-
           content:
-              Text(
-            '¿Quieres comprar la medalla Sembrador por ${medal.costStars} estrellas?\n\n'
-            'Tus estrellas se descontarán, pero la medalla será tuya permanentemente.',
+              const Text(
+            '¿Quieres comprar la medalla Sembrador por 90 estrellas?\n\n'
+            'Tus estrellas se descontarán y la medalla quedará desbloqueada en tu perfil.',
             style:
-                const TextStyle(
+                TextStyle(
               color:
                   Color(
                 0xFF59666D,
@@ -146,7 +187,6 @@ class LogrosPage extends StatelessWidget {
                   1.4,
             ),
           ),
-
           actions: [
             TextButton(
               onPressed:
@@ -161,7 +201,6 @@ class LogrosPage extends StatelessWidget {
                 'Cancelar',
               ),
             ),
-
             ElevatedButton.icon(
               onPressed:
                   () {
@@ -170,21 +209,16 @@ class LogrosPage extends StatelessWidget {
                   true,
                 );
               },
-
               icon:
                   const Icon(
-                Icons
-                    .star_rounded,
+                Icons.star_rounded,
               ),
-
               label:
-                  Text(
-                'Comprar ${medal.costStars}',
+                  const Text(
+                'Comprar 90',
               ),
-
               style:
-                  ElevatedButton
-                      .styleFrom(
+                  ElevatedButton.styleFrom(
                 backgroundColor:
                     const Color(
                   0xFF45A049,
@@ -207,74 +241,78 @@ class LogrosPage extends StatelessWidget {
     }
 
     // ================================================================
-    // COMPRAR
+    // VOLVER A VALIDAR LAS ESTRELLAS
     // ================================================================
 
-    final result =
-        await progressService
-            .purchaseMedal(
+    if (currentUserService.stars <
+        _sembradorCost) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No tienes suficientes estrellas.',
+            ),
+          ),
+        );
+
+      return;
+    }
+
+    // ================================================================
+    // DESCONTAR ESTRELLAS
+    // ================================================================
+
+    final int newStars =
+        currentUserService.stars -
+            _sembradorCost;
+
+    currentUserService.updateCurrentUser(
+      <String, dynamic>{
+        'stars':
+            newStars,
+      },
+    );
+
+    // ================================================================
+    // GUARDAR MEDALLA EN EL USUARIO ACTUAL
+    // ================================================================
+
+    final List<String> ownedMedals =
+        _getOwnedMedals(
+      currentUserService,
+    );
+
+    if (!ownedMedals.contains(
       'sembrador',
+    )) {
+      ownedMedals.add(
+        'sembrador',
+      );
+    }
+
+    currentUserService.updateCurrentUser(
+      <String, dynamic>{
+        'ownedMedals':
+            ownedMedals,
+      },
     );
 
     if (!context.mounted) {
       return;
     }
 
-    switch (result) {
-      case MedalPurchaseResult.success:
-        HapticFeedback.mediumImpact();
+    HapticFeedback.mediumImpact();
 
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
-              content: Text(
-                '¡Felicidades! 🌱 Has conseguido la medalla Sembrador.',
-              ),
-            ),
-          );
-
-        break;
-
-      case MedalPurchaseResult.alreadyOwned:
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Ya tienes esta medalla.',
-              ),
-            ),
-          );
-
-        break;
-
-      case MedalPurchaseResult.insufficientStars:
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
-              content: Text(
-                'No tienes suficientes estrellas.',
-              ),
-            ),
-          );
-
-        break;
-
-      case MedalPurchaseResult.medalNotFound:
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
-              content: Text(
-                'No se pudo encontrar esta medalla.',
-              ),
-            ),
-          );
-
-        break;
-    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text(
+            '¡Felicidades! 🌱 Has conseguido la medalla Sembrador.',
+          ),
+        ),
+      );
   }
 
   // ===================================================================
@@ -283,26 +321,23 @@ class LogrosPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progressService =
-        PlayerProgressService.instance;
+    final CurrentUserService currentUserService =
+        CurrentUserService.instance;
 
     return AnimatedBuilder(
       animation:
-          progressService,
+          currentUserService,
 
       builder:
           (
         context,
         child,
       ) {
-        final profile =
-            progressService.activeProfile;
-
         // =============================================================
-        // SIN PERFIL
+        // SIN USUARIO AUTENTICADO
         // =============================================================
 
-        if (profile == null) {
+        if (!currentUserService.hasUser) {
           return Scaffold(
             backgroundColor:
                 const Color(
@@ -335,34 +370,46 @@ class LogrosPage extends StatelessWidget {
         }
 
         // =============================================================
+        // DATOS DEL USUARIO AUTENTICADO
+        // =============================================================
+
+        final String playerName =
+            currentUserService.displayName.isNotEmpty
+                ? currentUserService.displayName
+                : 'Jugador';
+
+        final String avatar =
+            currentUserService.avatarValue.isNotEmpty
+                ? currentUserService.avatarValue
+                : '🐢';
+
+        final int stars =
+            currentUserService.stars;
+
+        // =============================================================
         // MEDALLA SEMBRADOR
         // =============================================================
 
-        final sembrador =
-            progressService.getMedal(
+        const int sembradorCost =
+            _sembradorCost;
+
+        final bool ownsSembrador =
+            _ownsMedal(
+          currentUserService,
           'sembrador',
         );
 
-        final sembradorCost =
-            sembrador?.costStars ??
-                90;
-
-        final ownsSembrador =
-            profile.ownsMedal(
-          'sembrador',
-        );
-
-        final missingStars =
-            profile.stars >=
+        final int missingStars =
+            stars >=
                     sembradorCost
                 ? 0
                 : sembradorCost -
-                    profile.stars;
+                    stars;
 
         final double sembradorProgress =
             ownsSembrador
                 ? 1.0
-                : (profile.stars /
+                : (stars /
                         sembradorCost)
                     .clamp(
                       0.0,
@@ -370,7 +417,7 @@ class LogrosPage extends StatelessWidget {
                     )
                     .toDouble();
 
-        final progressPercent =
+        final int progressPercent =
             (sembradorProgress *
                     100)
                 .round();
@@ -721,7 +768,7 @@ class LogrosPage extends StatelessWidget {
 
                                 child:
                                     Text(
-                                  profile.avatar,
+                                  avatar,
 
                                   style:
                                       const TextStyle(
@@ -749,7 +796,7 @@ class LogrosPage extends StatelessWidget {
 
                                   children: [
                                     Text(
-                                      profile.name,
+                                      playerName,
 
                                       style:
                                           const TextStyle(
@@ -949,7 +996,7 @@ class LogrosPage extends StatelessWidget {
                                   ),
 
                                   Text(
-                                    '${profile.stars}',
+                                    '$stars',
 
                                     style:
                                         const TextStyle(
@@ -1490,7 +1537,7 @@ class LogrosPage extends StatelessWidget {
                                           : () {
                                               _buySembrador(
                                                 context,
-                                                progressService,
+                                                currentUserService,
                                               );
                                             },
 
@@ -1499,7 +1546,7 @@ class LogrosPage extends StatelessWidget {
                                     ownsSembrador
                                         ? Icons
                                             .check_circle_rounded
-                                        : profile.stars >=
+                                        : stars >=
                                                 sembradorCost
                                             ? Icons
                                                 .shopping_cart_rounded
@@ -1511,7 +1558,7 @@ class LogrosPage extends StatelessWidget {
                                       Text(
                                     ownsSembrador
                                         ? 'Medalla desbloqueada'
-                                        : profile.stars >=
+                                        : stars >=
                                                 sembradorCost
                                             ? 'Comprar por $sembradorCost ⭐'
                                             : 'Necesitas $sembradorCost ⭐',
@@ -1739,7 +1786,7 @@ class LogrosPage extends StatelessWidget {
                               ) {
                                 return TortiChatPage(
                                   playerName:
-                                      profile.name,
+                                      playerName,
                                 );
                               },
                             ),

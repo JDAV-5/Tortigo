@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../data/services/player_progress_service.dart';
+import '../../../data/services/current_user_service.dart';
+import '../../../data/services/user_service.dart';
 
-class PinAccessPage extends StatefulWidget {
+class PinAccessPage
+    extends StatefulWidget {
   final String playerName;
-
-  // PIN temporal para validar el perfil.
-  // Más adelante podremos guardarlo junto al perfil.
-  final String expectedPin;
+  final String avatar;
 
   const PinAccessPage({
     super.key,
     required this.playerName,
-    required this.expectedPin,
+    required this.avatar,
   });
 
   @override
@@ -23,56 +22,81 @@ class PinAccessPage extends StatefulWidget {
 
 class _PinAccessPageState
     extends State<PinAccessPage> {
-  static const int _pinLength = 4;
+  // ============================================================
+  // SERVICIOS
+  // ============================================================
 
-  final PlayerProgressService _progressService =
-      PlayerProgressService.instance;
+  final UserService _userService =
+      UserService.instance;
 
-  String _pin = '';
+  final CurrentUserService
+      _currentUserService =
+      CurrentUserService.instance;
 
-  bool _hasError = false;
-  bool _isChecking = false;
+  // ============================================================
+  // PIN
+  // ============================================================
+
+  static const int _pinLength =
+      4;
+
+  String _pin =
+      '';
+
+  bool _hasError =
+      false;
+
+  bool _isChecking =
+      false;
+
+  String _errorMessage =
+      'PIN incorrecto. Inténtalo otra vez.';
 
   // ============================================================
   // AGREGAR NÚMERO
   // ============================================================
 
-  void _addDigit(String digit) {
+  void _addDigit(
+    String digit,
+  ) {
     if (_isChecking) {
       return;
     }
 
-    if (_pin.length >= _pinLength) {
+    if (_pin.length >=
+        _pinLength) {
       return;
     }
 
     HapticFeedback.selectionClick();
 
     setState(() {
-      _hasError = false;
-      _pin += digit;
+      _hasError =
+          false;
+
+      _pin +=
+          digit;
     });
   }
 
   // ============================================================
-  // BORRAR ÚLTIMO NÚMERO
+  // BORRAR NÚMERO
   // ============================================================
 
   void _removeDigit() {
-    if (_isChecking) {
-      return;
-    }
-
-    if (_pin.isEmpty) {
+    if (_isChecking ||
+        _pin.isEmpty) {
       return;
     }
 
     HapticFeedback.lightImpact();
 
     setState(() {
-      _hasError = false;
+      _hasError =
+          false;
 
-      _pin = _pin.substring(
+      _pin =
+          _pin.substring(
         0,
         _pin.length - 1,
       );
@@ -80,7 +104,7 @@ class _PinAccessPageState
   }
 
   // ============================================================
-  // VALIDAR PIN
+  // ENVIAR LOGIN AL BACKEND
   // ============================================================
 
   Future<void> _submitPin() async {
@@ -88,134 +112,125 @@ class _PinAccessPageState
       return;
     }
 
-    if (_pin.length != _pinLength) {
-      HapticFeedback.lightImpact();
-
+    if (_pin.length !=
+        _pinLength) {
       setState(() {
-        _hasError = true;
+        _hasError =
+            true;
+
+        _errorMessage =
+            'Ingresa los 4 números de tu PIN.';
       });
 
       return;
     }
 
     setState(() {
-      _isChecking = true;
-      _hasError = false;
+      _isChecking =
+          true;
+
+      _hasError =
+          false;
     });
 
-    // Pequeña espera para que la interacción
-    // se sienta más natural.
-    await Future.delayed(
-      const Duration(
-        milliseconds: 250,
-      ),
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    // ==========================================================
-    // PIN CORRECTO
-    // ==========================================================
-
-    if (_pin == widget.expectedPin) {
-      HapticFeedback.mediumImpact();
-
+    try {
       // ========================================================
-      // ACTIVAR PERFIL
-      // ========================================================
+      // LOGIN:
       //
-      // Aquí ocurre algo MUY importante:
-      //
-      // Ana  -> perfil activo Ana 🐢
-      // Juan -> perfil activo Juan 🦫
-      // Sofía -> perfil activo Sofía 🐼
-      //
-      // Home, Misiones y Logros podrán consultar después
-      // exactamente este mismo perfil.
+      // DisplayName + PIN
       // ========================================================
 
-      final profileActivated =
-          await _progressService
-              .setActiveProfileByName(
-        widget.playerName,
+      final Map<String, dynamic>
+          response =
+          await _userService.login(
+        displayName:
+            widget.playerName,
+        pin:
+            _pin,
+      );
+
+      // ========================================================
+      // OBTENER USUARIO
+      // ========================================================
+
+      final dynamic rawData =
+          response['data'];
+
+      if (rawData is! Map) {
+        throw Exception(
+          'El servidor no devolvió los datos del usuario.',
+        );
+      }
+
+      final Map<String, dynamic>
+          user =
+          Map<String, dynamic>.from(
+        rawData,
+      );
+
+      user['stars'] ??=
+          0;
+
+      // ========================================================
+      // GUARDAR USUARIO ACTIVO
+      // ========================================================
+
+      _currentUserService
+          .setCurrentUser(
+        user,
       );
 
       if (!mounted) {
         return;
       }
 
-      // ========================================================
-      // ERROR SI NO EXISTE EL PERFIL
-      // ========================================================
-
-      if (!profileActivated) {
-        setState(() {
-          _isChecking = false;
-        });
-
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(
-                'No se pudo abrir el perfil de ${widget.playerName}.',
-              ),
-              duration: const Duration(
-                seconds: 2,
-              ),
-            ),
-          );
-
-        return;
-      }
+      HapticFeedback.mediumImpact();
 
       // ========================================================
-      // ENTRAR AL HOME
-      // ========================================================
-      //
-      // Seguimos enviando playerName por compatibilidad
-      // temporal con el Home actual.
-      //
-      // En el siguiente paso el Home dejará de depender
-      // de este argumento y leerá directamente el perfil activo.
+      // IR AL HOME
       // ========================================================
 
       Navigator.pushNamedAndRemoveUntil(
         context,
         '/home',
-        (route) => false,
-        arguments: widget.playerName,
+        (
+          Route<dynamic> route,
+        ) =>
+            false,
       );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
 
-      return;
+      HapticFeedback.heavyImpact();
+
+      String message =
+          error.toString();
+
+      if (message.startsWith(
+        'Exception: ',
+      )) {
+        message =
+            message.substring(
+          'Exception: '.length,
+        );
+      }
+
+      setState(() {
+        _hasError =
+            true;
+
+        _isChecking =
+            false;
+
+        _errorMessage =
+            message;
+
+        _pin =
+            '';
+      });
     }
-
-    // ==========================================================
-    // PIN INCORRECTO
-    // ==========================================================
-
-    HapticFeedback.heavyImpact();
-
-    setState(() {
-      _hasError = true;
-      _isChecking = false;
-    });
-
-    await Future.delayed(
-      const Duration(
-        milliseconds: 650,
-      ),
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _pin = '';
-    });
   }
 
   // ============================================================
@@ -225,7 +240,9 @@ class _PinAccessPageState
   void _goBack() {
     HapticFeedback.selectionClick();
 
-    Navigator.pop(context);
+    Navigator.pop(
+      context,
+    );
   }
 
   // ============================================================
@@ -233,10 +250,15 @@ class _PinAccessPageState
   // ============================================================
 
   @override
-  Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+  Widget build(
+    BuildContext context,
+  ) {
+    return AnnotatedRegion<
+        SystemUiOverlayStyle>(
+      value:
+          const SystemUiOverlayStyle(
+        statusBarColor:
+            Colors.transparent,
         statusBarIconBrightness:
             Brightness.light,
         statusBarBrightness:
@@ -244,16 +266,16 @@ class _PinAccessPageState
         systemStatusBarContrastEnforced:
             false,
       ),
-
-      child: Scaffold(
+      child:
+          Scaffold(
         backgroundColor:
             const Color(
           0xFF236B3A,
         ),
-
-        body: Stack(
-          fit: StackFit.expand,
-
+        body:
+            Stack(
+          fit:
+              StackFit.expand,
           children: [
             // =================================================
             // FONDO
@@ -261,17 +283,17 @@ class _PinAccessPageState
 
             Image.asset(
               'assets/images/fondo2.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
+              fit:
+                  BoxFit.cover,
+              alignment:
+                  Alignment.center,
             ),
 
-            // =================================================
-            // CAPA MUY SUAVE
-            // =================================================
-
             Container(
-              color: Colors.black.withValues(
-                alpha: 0.03,
+              color:
+                  Colors.black.withValues(
+                alpha:
+                    0.03,
               ),
             ),
 
@@ -280,10 +302,12 @@ class _PinAccessPageState
             // =================================================
 
             SafeArea(
-              child: LayoutBuilder(
-                builder: (
-                  context,
-                  constraints,
+              child:
+                  LayoutBuilder(
+                builder:
+                    (
+                  BuildContext context,
+                  BoxConstraints constraints,
                 ) {
                   final bool compact =
                       constraints.maxHeight <
@@ -292,231 +316,76 @@ class _PinAccessPageState
                   return SingleChildScrollView(
                     physics:
                         const BouncingScrollPhysics(),
-
-                    child: ConstrainedBox(
+                    child:
+                        ConstrainedBox(
                       constraints:
                           BoxConstraints(
                         minHeight:
-                            constraints
-                                .maxHeight,
+                            constraints.maxHeight,
                       ),
-
-                      child: Padding(
+                      child:
+                          Padding(
                         padding:
-                            const EdgeInsets
-                                .symmetric(
-                          horizontal: 22,
+                            const EdgeInsets.symmetric(
+                          horizontal:
+                              22,
                         ),
-
-                        child: Column(
+                        child:
+                            Column(
                           children: [
-                            // =====================================
-                            // BOTÓN VOLVER
-                            // =====================================
+                            // =================================
+                            // VOLVER
+                            // =================================
 
                             Align(
                               alignment:
-                                  Alignment
-                                      .centerLeft,
-
+                                  Alignment.centerLeft,
                               child:
-                                  GestureDetector(
+                                  _BackButton(
                                 onTap:
                                     _goBack,
-
-                                child:
-                                    Container(
-                                  width: 44,
-                                  height: 44,
-
-                                  decoration:
-                                      BoxDecoration(
-                                    color:
-                                        const Color(
-                                      0xFF45A049,
-                                    ),
-
-                                    borderRadius:
-                                        BorderRadius
-                                            .circular(
-                                      14,
-                                    ),
-
-                                    border:
-                                        Border.all(
-                                      color:
-                                          Colors
-                                              .white,
-                                      width:
-                                          2,
-                                    ),
-
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors
-                                            .black
-                                            .withValues(
-                                          alpha:
-                                              0.18,
-                                        ),
-                                        blurRadius:
-                                            8,
-                                        offset:
-                                            const Offset(
-                                          0,
-                                          3,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                  child:
-                                      const Icon(
-                                    Icons
-                                        .arrow_back_rounded,
-                                    color:
-                                        Colors
-                                            .white,
-                                    size: 27,
-                                  ),
-                                ),
                               ),
                             ),
 
                             SizedBox(
                               height:
                                   compact
-                                      ? 18
-                                      : 30,
+                                      ? 15
+                                      : 25,
                             ),
 
-                            // =====================================
-                            // SALUDO
-                            // =====================================
+                            // =================================
+                            // AVATAR
+                            // =================================
 
-                            Text(
-                              'Hola ${widget.playerName}',
-                              textAlign:
-                                  TextAlign
-                                      .center,
-
-                              style:
-                                  const TextStyle(
-                                color:
-                                    Color(
-                                  0xFF176B32,
-                                ),
-                                fontSize:
-                                    30,
-                                fontWeight:
-                                    FontWeight
-                                        .w800,
-
-                                shadows: [
-                                  Shadow(
-                                    color:
-                                        Colors
-                                            .white70,
-                                    blurRadius:
-                                        4,
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(
-                              height: 8,
-                            ),
-
-                            const Text(
-                              'Ingresa tu PIN para continuar',
-                              textAlign:
-                                  TextAlign
-                                      .center,
-
-                              style:
-                                  TextStyle(
-                                color:
-                                    Color(
-                                  0xFF2D7A3F,
-                                ),
-                                fontSize:
-                                    14,
-                                fontWeight:
-                                    FontWeight
-                                        .w600,
-                              ),
-                            ),
-
-                            SizedBox(
-                              height:
-                                  compact
-                                      ? 18
-                                      : 24,
-                            ),
-
-                            // =====================================
-                            // INDICADORES DEL PIN
-                            // =====================================
-
-                            AnimatedContainer(
-                              duration:
-                                  const Duration(
-                                milliseconds:
-                                    220,
-                              ),
-
+                            Container(
                               width:
-                                  double.infinity,
-
-                              padding:
-                                  const EdgeInsets
-                                      .symmetric(
-                                horizontal:
-                                    22,
-                                vertical:
-                                    15,
-                              ),
-
+                                  90,
+                              height:
+                                  90,
+                              alignment:
+                                  Alignment.center,
                               decoration:
                                   BoxDecoration(
-                                color: Colors
-                                    .white
-                                    .withValues(
-                                  alpha:
-                                      0.94,
-                                ),
-
-                                borderRadius:
-                                    BorderRadius
-                                        .circular(
-                                  18,
-                                ),
-
+                                color:
+                                    Colors.white,
+                                shape:
+                                    BoxShape.circle,
                                 border:
                                     Border.all(
                                   color:
-                                      _hasError
-                                          ? const Color(
-                                              0xFFE24C4B,
-                                            )
-                                          : const Color(
-                                              0xFF59B83A,
-                                            ),
+                                      const Color(
+                                    0xFF59B83A,
+                                  ),
                                   width:
-                                      _hasError
-                                          ? 2.5
-                                          : 2,
+                                      3,
                                 ),
-
                                 boxShadow: [
                                   BoxShadow(
                                     color:
-                                        const Color(
-                                      0xFF236B3A,
-                                    ).withValues(
+                                        Colors.black.withValues(
                                       alpha:
-                                          0.14,
+                                          0.16,
                                     ),
                                     blurRadius:
                                         12,
@@ -528,157 +397,224 @@ class _PinAccessPageState
                                   ),
                                 ],
                               ),
+                              child:
+                                  Text(
+                                widget.avatar,
+                                style:
+                                    const TextStyle(
+                                  fontSize:
+                                      52,
+                                ),
+                              ),
+                            ),
 
-                              child: Row(
+                            const SizedBox(
+                              height:
+                                  14,
+                            ),
+
+                            // =================================
+                            // NOMBRE
+                            // =================================
+
+                            Text(
+                              'Hola ${widget.playerName}',
+                              textAlign:
+                                  TextAlign.center,
+                              style:
+                                  const TextStyle(
+                                color:
+                                    Color(
+                                  0xFF176B32,
+                                ),
+                                fontSize:
+                                    28,
+                                fontWeight:
+                                    FontWeight.w800,
+                                shadows: [
+                                  Shadow(
+                                    color:
+                                        Colors.white70,
+                                    blurRadius:
+                                        4,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(
+                              height:
+                                  6,
+                            ),
+
+                            const Text(
+                              'Ingresa tu PIN para continuar',
+                              textAlign:
+                                  TextAlign.center,
+                              style:
+                                  TextStyle(
+                                color:
+                                    Color(
+                                  0xFF2D7A3F,
+                                ),
+                                fontSize:
+                                    14,
+                                fontWeight:
+                                    FontWeight.w600,
+                              ),
+                            ),
+
+                            SizedBox(
+                              height:
+                                  compact
+                                      ? 18
+                                      : 24,
+                            ),
+
+                            // =================================
+                            // INDICADORES
+                            // =================================
+
+                            Container(
+                              width:
+                                  double.infinity,
+                              padding:
+                                  const EdgeInsets.symmetric(
+                                horizontal:
+                                    22,
+                                vertical:
+                                    15,
+                              ),
+                              decoration:
+                                  BoxDecoration(
+                                color:
+                                    Colors.white.withValues(
+                                  alpha:
+                                      0.94,
+                                ),
+                                borderRadius:
+                                    BorderRadius.circular(
+                                  18,
+                                ),
+                                border:
+                                    Border.all(
+                                  color:
+                                      _hasError
+                                          ? const Color(
+                                              0xFFE24C4B,
+                                            )
+                                          : const Color(
+                                              0xFF59B83A,
+                                            ),
+                                  width:
+                                      2,
+                                ),
+                              ),
+                              child:
+                                  Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .spaceEvenly,
-
+                                    MainAxisAlignment.spaceEvenly,
                                 children:
                                     List.generate(
                                   _pinLength,
                                   (
-                                    index,
+                                    int index,
                                   ) {
-                                    final filled =
+                                    final bool filled =
                                         index <
                                             _pin.length;
 
-                                    return AnimatedContainer(
-                                      duration:
-                                          const Duration(
-                                        milliseconds:
-                                            150,
-                                      ),
-
-                                      width: 42,
+                                    return Container(
+                                      width:
+                                          42,
                                       height:
                                           42,
-
                                       decoration:
                                           BoxDecoration(
                                         shape:
-                                            BoxShape
-                                                .circle,
-
-                                        color: filled
-                                            ? const Color(
-                                                0xFF59B83A,
-                                              )
-                                            : Colors
-                                                .white,
-
+                                            BoxShape.circle,
+                                        color:
+                                            filled
+                                                ? const Color(
+                                                    0xFF59B83A,
+                                                  )
+                                                : Colors.white,
                                         border:
                                             Border.all(
-                                          color: _hasError
-                                              ? const Color(
-                                                  0xFFE24C4B,
-                                                )
-                                              : const Color(
-                                                  0xFF45A049,
-                                                ),
+                                          color:
+                                              _hasError
+                                                  ? const Color(
+                                                      0xFFE24C4B,
+                                                    )
+                                                  : const Color(
+                                                      0xFF45A049,
+                                                    ),
                                           width:
                                               2,
                                         ),
                                       ),
-
-                                      child: filled
-                                          ? const Center(
-                                              child:
-                                                  Icon(
-                                                Icons
-                                                    .circle,
-                                                color:
-                                                    Colors.white,
-                                                size:
-                                                    15,
-                                              ),
-                                            )
-                                          : null,
+                                      child:
+                                          filled
+                                              ? const Icon(
+                                                  Icons.circle,
+                                                  color:
+                                                      Colors.white,
+                                                  size:
+                                                      14,
+                                                )
+                                              : null,
                                     );
                                   },
                                 ),
                               ),
                             ),
 
-                            // =====================================
+                            // =================================
                             // ERROR
-                            // =====================================
-
-                            AnimatedSwitcher(
-                              duration:
-                                  const Duration(
-                                milliseconds:
-                                    220,
-                              ),
-
-                              child: _hasError
-                                  ? const Padding(
-                                      key:
-                                          ValueKey(
-                                        'error',
-                                      ),
-                                      padding:
-                                          EdgeInsets
-                                              .only(
-                                        top:
-                                            9,
-                                      ),
-                                      child:
-                                          Text(
-                                        'PIN incorrecto. Inténtalo otra vez.',
-                                        textAlign:
-                                            TextAlign
-                                                .center,
-                                        style:
-                                            TextStyle(
-                                          color:
-                                              Color(
-                                            0xFFC62828,
-                                          ),
-                                          fontSize:
-                                              13,
-                                          fontWeight:
-                                              FontWeight
-                                                  .w700,
-                                        ),
-                                      ),
-                                    )
-                                  : const SizedBox(
-                                      key:
-                                          ValueKey(
-                                        'empty',
-                                      ),
-                                      height:
-                                          25,
-                                    ),
-                            ),
+                            // =================================
 
                             SizedBox(
                               height:
-                                  compact
-                                      ? 4
-                                      : 10,
+                                  45,
+                              child:
+                                  Center(
+                                child:
+                                    _hasError
+                                        ? Text(
+                                            _errorMessage,
+                                            textAlign:
+                                                TextAlign.center,
+                                            style:
+                                                const TextStyle(
+                                              color:
+                                                  Color(
+                                                0xFFC62828,
+                                              ),
+                                              fontSize:
+                                                  12,
+                                              fontWeight:
+                                                  FontWeight.w700,
+                                            ),
+                                          )
+                                        : null,
+                              ),
                             ),
 
-                            // =====================================
-                            // TECLADO 1 - 9
-                            // =====================================
+                            // =================================
+                            // TECLADO 1-9
+                            // =================================
 
                             SizedBox(
-                              width: 265,
-
+                              width:
+                                  265,
                               child:
                                   GridView.builder(
                                 shrinkWrap:
                                     true,
-
                                 physics:
                                     const NeverScrollableScrollPhysics(),
-
                                 itemCount:
                                     9,
-
                                 gridDelegate:
                                     const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount:
@@ -690,19 +626,17 @@ class _PinAccessPageState
                                   childAspectRatio:
                                       1.20,
                                 ),
-
                                 itemBuilder:
                                     (
-                                  context,
-                                  index,
+                                  BuildContext context,
+                                  int index,
                                 ) {
-                                  final number =
+                                  final String number =
                                       '${index + 1}';
 
                                   return _PinNumberButton(
                                     label:
                                         number,
-
                                     onTap:
                                         () {
                                       _addDigit(
@@ -715,34 +649,35 @@ class _PinAccessPageState
                             ),
 
                             const SizedBox(
-                              height: 12,
+                              height:
+                                  12,
                             ),
 
-                            // =====================================
-                            // FILA 0 / BORRAR
-                            // =====================================
+                            // =================================
+                            // 0 + BORRAR
+                            // =================================
 
                             SizedBox(
-                              width: 265,
-
-                              child: Row(
+                              width:
+                                  265,
+                              child:
+                                  Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .center,
-
+                                    MainAxisAlignment.center,
                                 children: [
                                   const SizedBox(
-                                    width: 72,
+                                    width:
+                                        72,
                                   ),
 
                                   const SizedBox(
-                                    width: 14,
+                                    width:
+                                        14,
                                   ),
 
                                   _PinNumberButton(
                                     label:
                                         '0',
-
                                     onTap:
                                         () {
                                       _addDigit(
@@ -752,7 +687,8 @@ class _PinAccessPageState
                                   ),
 
                                   const SizedBox(
-                                    width: 14,
+                                    width:
+                                        14,
                                   ),
 
                                   _PinDeleteButton(
@@ -767,17 +703,18 @@ class _PinAccessPageState
                               height:
                                   compact
                                       ? 20
-                                      : 30,
+                                      : 28,
                             ),
 
-                            // =====================================
-                            // BOTÓN ENTRAR
-                            // =====================================
+                            // =================================
+                            // ENTRAR
+                            // =================================
 
                             SizedBox(
-                              width: 220,
-                              height: 54,
-
+                              width:
+                                  220,
+                              height:
+                                  54,
                               child:
                                   ElevatedButton(
                                 onPressed:
@@ -786,19 +723,14 @@ class _PinAccessPageState
                                             !_isChecking
                                         ? _submitPin
                                         : null,
-
                                 style:
-                                    ElevatedButton
-                                        .styleFrom(
+                                    ElevatedButton.styleFrom(
                                   backgroundColor:
                                       const Color(
                                     0xFF45A049,
                                   ),
-
                                   foregroundColor:
-                                      Colors
-                                          .white,
-
+                                      Colors.white,
                                   disabledBackgroundColor:
                                       const Color(
                                     0xFF59B83A,
@@ -806,32 +738,14 @@ class _PinAccessPageState
                                     alpha:
                                         0.45,
                                   ),
-
-                                  disabledForegroundColor:
-                                      Colors
-                                          .white70,
-
-                                  elevation:
-                                      5,
-
-                                  shadowColor:
-                                      const Color(
-                                    0xFF236B3A,
-                                  ).withValues(
-                                    alpha:
-                                        0.35,
-                                  ),
-
                                   shape:
                                       RoundedRectangleBorder(
                                     borderRadius:
-                                        BorderRadius
-                                            .circular(
+                                        BorderRadius.circular(
                                       16,
                                     ),
                                   ),
                                 ),
-
                                 child:
                                     _isChecking
                                         ? const SizedBox(
@@ -861,7 +775,8 @@ class _PinAccessPageState
                             ),
 
                             const SizedBox(
-                              height: 30,
+                              height:
+                                  30,
                             ),
                           ],
                         ),
@@ -879,7 +794,63 @@ class _PinAccessPageState
 }
 
 // =====================================================================
-// BOTÓN NUMÉRICO
+// VOLVER
+// =====================================================================
+
+class _BackButton
+    extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _BackButton({
+    required this.onTap,
+  });
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    return GestureDetector(
+      onTap:
+          onTap,
+      child:
+          Container(
+        width:
+            44,
+        height:
+            44,
+        decoration:
+            BoxDecoration(
+          color:
+              const Color(
+            0xFF45A049,
+          ),
+          borderRadius:
+              BorderRadius.circular(
+            14,
+          ),
+          border:
+              Border.all(
+            color:
+                Colors.white,
+            width:
+                2,
+          ),
+        ),
+        child:
+            const Icon(
+          Icons.arrow_back_rounded,
+          color:
+              Colors.white,
+          size:
+              27,
+        ),
+      ),
+    );
+  }
+}
+
+// =====================================================================
+// NÚMERO
 // =====================================================================
 
 class _PinNumberButton
@@ -893,66 +864,51 @@ class _PinNumberButton
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return SizedBox(
-      width: 72,
-      height: 60,
-
-      child: Material(
-        color: Colors.transparent,
-
-        child: InkWell(
-          onTap: onTap,
-
+      width:
+          72,
+      height:
+          60,
+      child:
+          Material(
+        color:
+            Colors.transparent,
+        child:
+            InkWell(
+          onTap:
+              onTap,
           borderRadius:
               BorderRadius.circular(
             16,
           ),
-
-          child: Ink(
+          child:
+              Ink(
             decoration:
                 BoxDecoration(
               color:
                   Colors.white,
-
               borderRadius:
                   BorderRadius.circular(
                 16,
               ),
-
               border:
                   Border.all(
                 color:
                     const Color(
                   0xFF45A049,
                 ),
-                width: 2,
+                width:
+                    2,
               ),
-
-              boxShadow: [
-                BoxShadow(
-                  color:
-                      const Color(
-                    0xFF236B3A,
-                  ).withValues(
-                    alpha:
-                        0.16,
-                  ),
-                  blurRadius:
-                      7,
-                  offset:
-                      const Offset(
-                    0,
-                    3,
-                  ),
-                ),
-              ],
             ),
-
-            child: Center(
-              child: Text(
+            child:
+                Center(
+              child:
+                  Text(
                 label,
-
                 style:
                     const TextStyle(
                   color:
@@ -962,8 +918,7 @@ class _PinNumberButton
                   fontSize:
                       27,
                   fontWeight:
-                      FontWeight
-                          .w800,
+                      FontWeight.w800,
                 ),
               ),
             ),
@@ -975,7 +930,7 @@ class _PinNumberButton
 }
 
 // =====================================================================
-// BOTÓN BORRAR
+// BORRAR
 // =====================================================================
 
 class _PinDeleteButton
@@ -987,63 +942,48 @@ class _PinDeleteButton
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return SizedBox(
-      width: 72,
-      height: 60,
-
-      child: Material(
-        color: Colors.transparent,
-
-        child: InkWell(
-          onTap: onTap,
-
+      width:
+          72,
+      height:
+          60,
+      child:
+          Material(
+        color:
+            Colors.transparent,
+        child:
+            InkWell(
+          onTap:
+              onTap,
           borderRadius:
               BorderRadius.circular(
             16,
           ),
-
-          child: Ink(
+          child:
+              Ink(
             decoration:
                 BoxDecoration(
               color:
                   const Color(
                 0xFF45A049,
               ),
-
               borderRadius:
                   BorderRadius.circular(
                 16,
               ),
-
-              boxShadow: [
-                BoxShadow(
-                  color:
-                      const Color(
-                    0xFF236B3A,
-                  ).withValues(
-                    alpha:
-                        0.20,
-                  ),
-                  blurRadius:
-                      7,
-                  offset:
-                      const Offset(
-                    0,
-                    3,
-                  ),
-                ),
-              ],
             ),
-
             child:
                 const Center(
-              child: Icon(
-                Icons
-                    .backspace_rounded,
+              child:
+                  Icon(
+                Icons.backspace_rounded,
                 color:
                     Colors.white,
-                size: 28,
+                size:
+                    28,
               ),
             ),
           ),
